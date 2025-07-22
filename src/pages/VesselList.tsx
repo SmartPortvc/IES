@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Ship } from 'lucide-react';
-import { fetchPortById, fetchVessels } from '../services/api';
-import { Port } from '../types';
-import DashboardLayout from '../components/layout/DashboardLayout';
-import VesselList from '../components/vessel/VesselList';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
-import ErrorDisplay from '../components/ui/ErrorDisplay';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Ship } from "lucide-react";
+import { fetchPortById, fetchVessels } from "../services/api";
+import { Port } from "../types";
+import DashboardLayout from "../components/layout/DashboardLayout";
+import VesselList from "../components/vessel/VesselList";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
+import ErrorDisplay from "../components/ui/ErrorDisplay";
 
 const VesselListPage: React.FC = () => {
   const { portId } = useParams<{ portId: string }>();
   const navigate = useNavigate();
-  
+
   const [portData, setPortData] = useState<Port | null>(null);
   const [vessels, setVessels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ const VesselListPage: React.FC = () => {
 
   useEffect(() => {
     if (!portId) {
-      setError('Port ID is missing');
+      setError("Port ID is missing");
       setLoading(false);
       return;
     }
@@ -28,23 +28,23 @@ const VesselListPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Fetch port data
         const port = await fetchPortById(portId);
         if (!port) {
-          setError('Port not found');
+          setError("Port not found");
           setLoading(false);
           return;
         }
-        
+
         setPortData(port);
-        
+
         // Fetch vessels for this port
         const vesselData = await fetchVessels(portId);
         setVessels(vesselData);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load vessel data');
+        console.error("Error fetching data:", err);
+        setError("Failed to load vessel data");
       } finally {
         setLoading(false);
       }
@@ -59,10 +59,10 @@ const VesselListPage: React.FC = () => {
 
   if (error || !portData) {
     return (
-      <ErrorDisplay 
-        message={error || 'Failed to load port details'} 
-        redirectLink="/admin" 
-        redirectText="Back to Dashboard" 
+      <ErrorDisplay
+        message={error || "Failed to load port details"}
+        redirectLink="/admin"
+        redirectText="Back to Dashboard"
         fullPage
       />
     );
@@ -76,10 +76,10 @@ const VesselListPage: React.FC = () => {
       backLinkText="Back to Dashboard"
       icon={<Ship className="h-6 w-6 text-seagreen-600" />}
     >
-      <VesselList 
-        vessels={vessels} 
-        loading={false} 
-        error={null} 
+      <VesselList
+        vessels={vessels}
+        loading={false}
+        error={null}
         portName={portData.portName}
         showExport={true}
       />
