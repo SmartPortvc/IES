@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Ship, Ruler, Anchor, Package, Calendar, DollarSign, Navigation } from 'lucide-react';
-import FormField from '../ui/FormField';
-import { CargoType } from '../../types';
-import { fetchPorts } from '../../services/api';
+import React, { useState, useEffect } from "react";
+import {
+  Ship,
+  Ruler,
+  Anchor,
+  Package,
+  Calendar,
+  DollarSign,
+  Navigation,
+} from "lucide-react";
+import FormField from "../ui/FormField";
+import { CargoType } from "../../types";
+import { fetchPorts } from "../../services/api";
 
 interface VesselGeneralInfoProps {
   portName: string;
@@ -67,7 +75,7 @@ export const VesselGeneralInfo: React.FC<VesselGeneralInfoProps> = ({
   pobDepartureDateTime,
   setPobDepartureDateTime,
   nextPortOfCall,
-  setNextPortOfCall
+  setNextPortOfCall,
 }) => {
   const [portSuggestions, setPortSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -76,9 +84,9 @@ export const VesselGeneralInfo: React.FC<VesselGeneralInfoProps> = ({
     const loadPortSuggestions = async () => {
       try {
         const ports = await fetchPorts();
-        setPortSuggestions(ports.map(port => port.portName));
+        setPortSuggestions(ports.map((port) => port.portName));
       } catch (error) {
-        console.error('Error loading port suggestions:', error);
+        console.error("Error loading port suggestions:", error);
       }
     };
 
@@ -163,7 +171,7 @@ export const VesselGeneralInfo: React.FC<VesselGeneralInfoProps> = ({
             {showSuggestions && portName && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                 {portSuggestions
-                  .filter(port => 
+                  .filter((port) =>
                     port.toLowerCase().includes(portName.toLowerCase())
                   )
                   .map((suggestion, index) => (
@@ -186,7 +194,9 @@ export const VesselGeneralInfo: React.FC<VesselGeneralInfoProps> = ({
       </div>
 
       <div className="bg-gray-50 rounded-lg p-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-4">Details of Berth / Terminal, vessel is berthed at</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-4">
+          Details of Berth / Terminal, vessel is berthed at
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             id="length"
@@ -384,7 +394,7 @@ export const VesselStaticData: React.FC<VesselStaticDataProps> = ({
   beam,
   setBeam,
   dwt,
-  setDwt
+  setDwt,
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <FormField
@@ -463,7 +473,7 @@ export const VesselDraftInfo: React.FC<VesselDraftInfoProps> = ({
   departureDraftFwd,
   setDepartureDraftFwd,
   departureDraftAft,
-  setDepartureDraftAft
+  setDepartureDraftAft,
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
     <div className="bg-gray-50 rounded-lg p-6">
@@ -553,29 +563,31 @@ export const VesselDraftInfo: React.FC<VesselDraftInfoProps> = ({
 );
 
 interface VesselOperationInfoProps {
-  operationType: 'Import' | 'Export' | 'Coastal';
-  setOperationType: (value: 'Import' | 'Export' | 'Coastal') => void;
+  operationType: "Import" | "Export" | "Coastal";
+  setOperationType: (value: "Import" | "Export" | "Coastal") => void;
   arrivalFrom: string;
   setArrivalFrom: (value: string) => void;
   location: string;
   setLocation: (value: string) => void;
-  operation: 'Loading' | 'Unloading' | 'Transhipment' | 'Lighterage';
-  setOperation: (value: 'Loading' | 'Unloading' | 'Transhipment' | 'Lighterage') => void;
+  operation: "Loading" | "Unloading" | "Transhipment" | "Lighterage";
+  setOperation: (
+    value: "Loading" | "Unloading" | "Transhipment" | "Lighterage"
+  ) => void;
   cargoType: string;
   setCargoType: (value: string) => void;
   cargoName: string;
   setCargoName: (value: string) => void;
   volume: string;
   setVolume: (value: string) => void;
-  units: 'MT' | 'TEUs';
-  setUnits: (value: 'MT' | 'TEUs') => void;
+  units: "MT" | "TEUs";
+  setUnits: (value: "MT" | "TEUs") => void;
   cargoTypes: CargoType[];
   cargoQuantity: string;
   setCargoQuantity: (value: string) => void;
   totalRevenue: string;
   setTotalRevenue: (value: string) => void;
-  voyageType: 'Coastal' | 'Foreign';
-  setVoyageType: (value: 'Coastal' | 'Foreign') => void;
+  voyageType: "Coastal" | "Foreign";
+  setVoyageType: (value: "Coastal" | "Foreign") => void;
 }
 
 export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
@@ -601,7 +613,7 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
   totalRevenue,
   setTotalRevenue,
   voyageType,
-  setVoyageType
+  setVoyageType,
 }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -614,7 +626,9 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
         <select
           id="operationType"
           value={operationType}
-          onChange={(e) => setOperationType(e.target.value as 'Import' | 'Export' | 'Coastal')}
+          onChange={(e) =>
+            setOperationType(e.target.value as "Import" | "Export" | "Coastal")
+          }
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
           required
         >
@@ -633,7 +647,9 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
         <select
           id="voyageType"
           value={voyageType}
-          onChange={(e) => setVoyageType(e.target.value as 'Coastal' | 'Foreign')}
+          onChange={(e) =>
+            setVoyageType(e.target.value as "Coastal" | "Foreign")
+          }
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
           required
         >
@@ -687,7 +703,15 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
         <select
           id="operation"
           value={operation}
-          onChange={(e) => setOperation(e.target.value as 'Loading' | 'Unloading' | 'Transhipment' | 'Lighterage')}
+          onChange={(e) =>
+            setOperation(
+              e.target.value as
+                | "Loading"
+                | "Unloading"
+                | "Transhipment"
+                | "Lighterage"
+            )
+          }
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
           required
         >
@@ -795,7 +819,7 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
           </div>
           <select
             value={units}
-            onChange={(e) => setUnits(e.target.value as 'MT' | 'TEUs')}
+            onChange={(e) => setUnits(e.target.value as "MT" | "TEUs")}
             className="w-24 px-2 py-2 border border-l-0 border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-seagreen-500 bg-gray-50"
           >
             <option value="MT">MT</option>

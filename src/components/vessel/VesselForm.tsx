@@ -1,72 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Ship, Anchor } from 'lucide-react';
-import { toast } from 'react-toastify';
-import { useAuth } from '../../context/AuthContext';
-import { useCargoTypes } from '../../hooks/useCargoTypes';
-import { addVessel } from '../../services/api';
-import { fetchUserPortId, fetchPortById } from '../../services/api';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import LoadingSpinner from '../ui/LoadingSpinner';
-import ErrorDisplay from '../ui/ErrorDisplay';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Ship, Anchor } from "lucide-react";
+import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
+import { useCargoTypes } from "../../hooks/useCargoTypes";
+import { addVessel } from "../../services/api";
+import { fetchUserPortId, fetchPortById } from "../../services/api";
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import LoadingSpinner from "../ui/LoadingSpinner";
+import ErrorDisplay from "../ui/ErrorDisplay";
 import {
   VesselGeneralInfo,
   VesselStaticData,
   VesselDraftInfo,
-  VesselOperationInfo
-} from './FormSections';
+  VesselOperationInfo,
+} from "./FormSections";
 
 const VesselForm: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { cargoTypes, loading: loadingCargoTypes, error: cargoTypesError } = useCargoTypes();
-  
+  const {
+    cargoTypes,
+    loading: loadingCargoTypes,
+    error: cargoTypesError,
+  } = useCargoTypes();
+
   // Port ID state
   const [portId, setPortId] = useState<string | null>(null);
-  const [portName, setPortName] = useState('');
-  
+  const [portName, setPortName] = useState("");
+
   // General Vessel Information
-  const [length, setLength] = useState('');
-  const [draftAvailable, setDraftAvailable] = useState('');
-  const [vesselName, setVesselName] = useState('');
-  const [vesselOwner, setVesselOwner] = useState('');
-  const [vesselAgent, setVesselAgent] = useState('');
-  const [entryDate, setEntryDate] = useState('');
-  const [sailedOutDate, setSailedOutDate] = useState('');
-  const [imo, setImo] = useState('');
-  const [grt, setGrt] = useState('');
-  const [arrivalDateTime, setArrivalDateTime] = useState('');
-  const [pobDateTime, setPobDateTime] = useState('');
-  const [berthingDateTime, setBerthingDateTime] = useState('');
-  const [pobDepartureDateTime, setPobDepartureDateTime] = useState('');
-  const [nextPortOfCall, setNextPortOfCall] = useState('');
+  const [length, setLength] = useState("");
+  const [draftAvailable, setDraftAvailable] = useState("");
+  const [vesselName, setVesselName] = useState("");
+  const [vesselOwner, setVesselOwner] = useState("");
+  const [vesselAgent, setVesselAgent] = useState("");
+  const [entryDate, setEntryDate] = useState("");
+  const [sailedOutDate, setSailedOutDate] = useState("");
+  const [imo, setImo] = useState("");
+  const [grt, setGrt] = useState("");
+  const [arrivalDateTime, setArrivalDateTime] = useState("");
+  const [pobDateTime, setPobDateTime] = useState("");
+  const [berthingDateTime, setBerthingDateTime] = useState("");
+  const [pobDepartureDateTime, setPobDepartureDateTime] = useState("");
+  const [nextPortOfCall, setNextPortOfCall] = useState("");
 
   // Vessel Static Data
-  const [loa, setLoa] = useState('');
-  const [beam, setBeam] = useState('');
-  const [dwt, setDwt] = useState('');
-  
+  const [loa, setLoa] = useState("");
+  const [beam, setBeam] = useState("");
+  const [dwt, setDwt] = useState("");
+
   // Arrival Draft
-  const [arrivalDraftFwd, setArrivalDraftFwd] = useState('');
-  const [arrivalDraftAft, setArrivalDraftAft] = useState('');
-  
+  const [arrivalDraftFwd, setArrivalDraftFwd] = useState("");
+  const [arrivalDraftAft, setArrivalDraftAft] = useState("");
+
   // Departure Draft
-  const [departureDraftFwd, setDepartureDraftFwd] = useState('');
-  const [departureDraftAft, setDepartureDraftAft] = useState('');
-  
+  const [departureDraftFwd, setDepartureDraftFwd] = useState("");
+  const [departureDraftAft, setDepartureDraftAft] = useState("");
+
   // Operation Details
-  const [operationType, setOperationType] = useState<'Import' | 'Export' | 'Coastal'>('Import');
-  const [arrivalFrom, setArrivalFrom] = useState('');
-  const [location, setLocation] = useState('');
-  const [operation, setOperation] = useState<'Loading' | 'Unloading' | 'Transhipment' | 'Lighterage'>('Loading');
-  const [cargoType, setCargoType] = useState('');
-  const [cargoName, setCargoName] = useState('');
-  const [volume, setVolume] = useState('');
-  const [units, setUnits] = useState<'MT' | 'TEUs'>('MT');
-  const [cargoQuantity, setCargoQuantity] = useState('');
-  const [totalRevenue, setTotalRevenue] = useState('');
-  const [voyageType, setVoyageType] = useState<'Coastal' | 'Foreign'>('Coastal');
+  const [operationType, setOperationType] = useState<
+    "Import" | "Export" | "Coastal"
+  >("Import");
+  const [arrivalFrom, setArrivalFrom] = useState("");
+  const [location, setLocation] = useState("");
+  const [operation, setOperation] = useState<
+    "Loading" | "Unloading" | "Transhipment" | "Lighterage"
+  >("Loading");
+  const [cargoType, setCargoType] = useState("");
+  const [cargoName, setCargoName] = useState("");
+  const [volume, setVolume] = useState("");
+  const [units, setUnits] = useState<"MT" | "TEUs">("MT");
+  const [cargoQuantity, setCargoQuantity] = useState("");
+  const [totalRevenue, setTotalRevenue] = useState("");
+  const [voyageType, setVoyageType] = useState<"Coastal" | "Foreign">(
+    "Coastal"
+  );
 
   // Form state
   const [loading, setLoading] = useState(false);
@@ -81,7 +91,7 @@ const VesselForm: React.FC = () => {
         const userPortId = await fetchUserPortId(currentUser.uid);
         if (userPortId) {
           setPortId(userPortId);
-          
+
           // Fetch port details to get the name
           const portDetails = await fetchPortById(userPortId);
           if (portDetails) {
@@ -89,8 +99,8 @@ const VesselForm: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Error fetching port information:', err);
-        setError('Failed to load user port information');
+        console.error("Error fetching port information:", err);
+        setError("Failed to load user port information");
       }
     };
 
@@ -100,13 +110,13 @@ const VesselForm: React.FC = () => {
   const validateForm = (): boolean => {
     // Required fields validation
     const requiredFields = [
-      { value: vesselName, name: 'Vessel Name' },
-      { value: length, name: 'Length' },
-      { value: entryDate, name: 'Entry Date' },
-      { value: loa, name: 'Length Over All' },
-      { value: dwt, name: 'Dead Weight Tonnage' },
-      { value: cargoName, name: 'Cargo Name' },
-      { value: volume, name: 'Volume' }
+      { value: vesselName, name: "Vessel Name" },
+      { value: length, name: "Length" },
+      { value: entryDate, name: "Entry Date" },
+      { value: loa, name: "Length Over All" },
+      { value: dwt, name: "Dead Weight Tonnage" },
+      { value: cargoName, name: "Cargo Name" },
+      { value: volume, name: "Volume" },
     ];
 
     for (const field of requiredFields) {
@@ -118,12 +128,12 @@ const VesselForm: React.FC = () => {
 
     // Numeric validation
     const numericFields = [
-      { value: length, name: 'Length' },
-      { value: draftAvailable, name: 'Draft Available' },
-      { value: loa, name: 'LOA' },
-      { value: beam, name: 'Beam' },
-      { value: dwt, name: 'DWT' },
-      { value: volume, name: 'Volume' }
+      { value: length, name: "Length" },
+      { value: draftAvailable, name: "Draft Available" },
+      { value: loa, name: "LOA" },
+      { value: beam, name: "Beam" },
+      { value: dwt, name: "DWT" },
+      { value: volume, name: "Volume" },
     ];
 
     for (const field of numericFields) {
@@ -135,7 +145,7 @@ const VesselForm: React.FC = () => {
 
     // Date validation
     if (sailedOutDate && new Date(sailedOutDate) < new Date(entryDate)) {
-      toast.error('Sailed Out Date cannot be before Entry Date');
+      toast.error("Sailed Out Date cannot be before Entry Date");
       return false;
     }
 
@@ -144,18 +154,18 @@ const VesselForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!portId) {
-      toast.error('Port ID not found. Please contact support.');
+      toast.error("Port ID not found. Please contact support.");
       return;
     }
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const vesselData = {
         portId,
@@ -172,24 +182,26 @@ const VesselForm: React.FC = () => {
         arrivalDateTime: arrivalDateTime ? new Date(arrivalDateTime) : null,
         pobDateTime: pobDateTime ? new Date(pobDateTime) : null,
         berthingDateTime: berthingDateTime ? new Date(berthingDateTime) : null,
-        pobDepartureDateTime: pobDepartureDateTime ? new Date(pobDepartureDateTime) : null,
+        pobDepartureDateTime: pobDepartureDateTime
+          ? new Date(pobDepartureDateTime)
+          : null,
         nextPortOfCall,
-        
+
         // Static Data
         loa: Number(loa),
         beam: Number(beam),
         dwt: Number(dwt),
-        
+
         // Draft Information
         arrivalDraft: {
           forward: Number(arrivalDraftFwd),
-          aft: Number(arrivalDraftAft)
+          aft: Number(arrivalDraftAft),
         },
         departureDraft: {
           forward: Number(departureDraftFwd),
-          aft: Number(departureDraftAft)
+          aft: Number(departureDraftAft),
         },
-        
+
         // Operation Details
         operationType,
         arrivalFrom,
@@ -204,26 +216,28 @@ const VesselForm: React.FC = () => {
         },
         totalRevenue: Number(totalRevenue),
         voyageType,
-        
+
         // Metadata
-        addedDate: new Date()
+        addedDate: new Date(),
       };
-      
+
       await addVessel(vesselData);
-      
-      toast.success('Vessel added successfully!');
-      navigate('/port-dashboard');
+
+      toast.success("Vessel added successfully!");
+      navigate("/port-dashboard");
     } catch (err) {
-      console.error('Error adding vessel:', err);
-      toast.error('Failed to add vessel. Please try again.');
-      setError('Failed to add vessel. Please try again.');
+      console.error("Error adding vessel:", err);
+      toast.error("Failed to add vessel. Please try again.");
+      setError("Failed to add vessel. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   if (error || cargoTypesError) {
-    return <ErrorDisplay message={error || cargoTypesError || 'An error occurred'} />;
+    return (
+      <ErrorDisplay message={error || cargoTypesError || "An error occurred"} />
+    );
   }
 
   if (loadingCargoTypes) {
@@ -233,8 +247,8 @@ const VesselForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* General Vessel Information */}
-      <Card 
-        title="General Vessel Information" 
+      <Card
+        title="General Vessel Information"
         icon={<Ship className="h-6 w-6 text-seagreen-600" />}
       >
         <VesselGeneralInfo
@@ -271,8 +285,8 @@ const VesselForm: React.FC = () => {
         />
       </Card>
 
-      <Card 
-        title="Vessel Static Data" 
+      <Card
+        title="Vessel Static Data"
         icon={<Anchor className="h-6 w-6 text-seagreen-600" />}
       >
         <VesselStaticData
@@ -285,8 +299,8 @@ const VesselForm: React.FC = () => {
         />
       </Card>
 
-      <Card 
-        title="Draft Information" 
+      <Card
+        title="Draft Information"
         icon={<Ship className="h-6 w-6 text-seagreen-600" />}
       >
         <VesselDraftInfo
@@ -301,8 +315,8 @@ const VesselForm: React.FC = () => {
         />
       </Card>
 
-      <Card 
-        title="Operation Details" 
+      <Card
+        title="Operation Details"
         icon={<Ship className="h-6 w-6 text-seagreen-600" />}
       >
         <VesselOperationInfo
@@ -334,10 +348,7 @@ const VesselForm: React.FC = () => {
 
       {/* Form Actions */}
       <div className="flex justify-end space-x-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/port-dashboard')}
-        >
+        <Button variant="outline" onClick={() => navigate("/port-dashboard")}>
           Cancel
         </Button>
         <Button
