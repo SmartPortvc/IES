@@ -31,6 +31,9 @@ const WeeklyPage: React.FC = () => {
         setPorts(portsData);
         const allReports = await fetchWeeklyPerformancesWithPort();
         setReports(allReports);
+        console.log({
+          allReports,
+        });
       } catch (err) {
         setError("Failed to load weekly reports");
       } finally {
@@ -216,8 +219,6 @@ const WeeklyPage: React.FC = () => {
         icon={<Calendar className="h-6 w-6 text-seagreen-600" />}
         className="mb-6"
       >
-        {/* Summary Table */}
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -280,66 +281,38 @@ const WeeklyPage: React.FC = () => {
         )}
       </Card>
 
-      <Card title="Summary (Abstract)" className="mb-6">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  S.no
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Number
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Remarks
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {summary.map((row, i) => (
-                <tr key={i}>
-                  <td className="px-4 py-2">{i + 1}</td>
-                  <td className="px-4 py-2">{row.description}</td>
-                  <td className="px-4 py-2">{row.total}</td>
-                  <td className="px-4 py-2">{row.remarks || ""}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {/* Summary table removed as requested */}
 
       <Card
         title="Weekly Performance Reports"
         icon={<Ship className="h-6 w-6 text-seagreen-600" />}
       >
-        <Button
-          variant="outline"
-          onClick={handleExportAll}
-          icon={
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-          }
-        >
-          Export All
-        </Button>
+        <div className="w-full flex items-center mb-4">
+          <Button
+            variant="outline"
+            onClick={handleExportAll}
+            className="ml-auto"
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            }
+          >
+            Export All
+          </Button>
+        </div>
         {filteredReports.length === 0 ? (
           <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-8 rounded text-center">
             <Ship className="h-12 w-12 mx-auto mb-3 text-gray-400" />
@@ -351,39 +324,69 @@ const WeeklyPage: React.FC = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 w-full">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Vessel Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Port
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Agent Name
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Owner Details
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Purpose
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Qty
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cargo Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type of Cargo
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Quantity
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    DWT
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    LOA
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Berthed Date
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Departure Date
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Demurrages
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Departure
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Clearance Status
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredReports.map((report) => (
                   <tr key={report.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {report.vesselName || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {report.port?.portName || report.portId || "N/A"}
+                      {report.port?.portName || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.agentName || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.ownerDetails || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {report.purposeOfArrival || "N/A"}
@@ -392,13 +395,31 @@ const WeeklyPage: React.FC = () => {
                       {report.status || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      {report.cargoType || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.typeOfCargo || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {report.totalQuantity ?? "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.dwt || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.loa || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.berthedDate || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {report.departureDate || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {report.demurragesCollected ?? "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {report.departureDate || "N/A"}
+                      {report.clearanceIssued || "N/A"}
                     </td>
                   </tr>
                 ))}

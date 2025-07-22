@@ -22,6 +22,12 @@ export const fetchWeeklyPerformancesWithPort = async (): Promise<
         }
       })
     );
+
+    console.log({
+      performances,
+      portMap,
+    });
+
     // Attach port details to each performance
     return performances.map((perf) => ({
       ...perf,
