@@ -1,4 +1,18 @@
 // Fetch all weekly performances with port details
+// Update weekly performance report
+export const updateWeeklyPerformance = async (
+  reportId: string,
+  reportData: Partial<WeeklyPerformance>
+): Promise<void> => {
+  try {
+    const reportRef = doc(db, "weeklyPerformances", reportId);
+    await updateDoc(reportRef, reportData);
+  } catch (error) {
+    console.error("Error updating weekly performance:", error);
+    throw error;
+  }
+};
+
 export const fetchWeeklyPerformancesWithPort = async (): Promise<
   Array<WeeklyPerformance & { port?: Port }>
 > => {

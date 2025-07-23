@@ -25,6 +25,7 @@ const HodRegistration = lazy(() => import("./pages/HodRegistration"));
 const PortDashboard = lazy(() => import("./pages/PortDashboard"));
 const PortDetailsView = lazy(() => import("./pages/PortDetailsView"));
 const PortProfile = lazy(() => import("./pages/PortProfile"));
+const WeeklyPerformance = lazy(() => import("./pages/WeeklyPerformance"));
 const AddVessel = lazy(() => import("./pages/AddVessel"));
 const ManageCargoTypes = lazy(() => import("./pages/ManageCargoTypes"));
 const VesselList = lazy(() => import("./pages/VesselList"));
@@ -134,6 +135,14 @@ function App() {
             />
 
             <Route
+              path="/weekly-performance"
+              element={
+                <ProtectedRoute requiredRole="port">
+                  <WeeklyPerformance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/port-profile"
               element={
                 <ProtectedRoute requiredRole="port">
@@ -141,7 +150,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/add-vessel"
               element={

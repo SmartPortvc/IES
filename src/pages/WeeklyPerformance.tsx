@@ -1,39 +1,83 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Ship, Calendar } from "lucide-react";
-import { fetchPorts, fetchWeeklyPerformancesWithPort } from "../services/api";
-import { Port } from "../types";
+import {
+  fetchWeeklyPerformancesWithPort,
+  fetchUserPortId,
+  updateWeeklyPerformance,
+} from "../services/api";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Card from "../components/ui/Card";
 import DateRangePicker from "../components/ui/DateRangePicker";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
-import {
-  exportWeeklySummaryAndReports,
-  WeeklySummary,
-} from "../utils/excelExport";
+import { exportWeeklySummaryAndReports } from "../utils/excelExport";
 import Button from "../components/ui/Button";
-// ...existing code...
-const WeeklyPage: React.FC = () => {
-  const [ports, setPorts] = useState<Port[]>([]);
+import { useAuth } from "../context/AuthContext";
+import ViewReportModal from "../components/vessel/ViewReportModal";
+import EditReportModal from "../components/vessel/EditReportModal";
+
+const WeeklyPerformance: React.FC = () => {
+  const { currentUser } = useAuth();
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPortId, setSelectedPortId] = useState<string>("all");
+  const [userPortId, setUserPortId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleViewReport = (report: any) => {
+    setSelectedReport(report);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditReport = (report: any) => {
+    setSelectedReport(report);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateReport = async (updatedReport: any) => {
+    try {
+      // Call API to update the report
+      await updateWeeklyPerformance(updatedReport.id, updatedReport);
+
+      // Update local state
+      const newReports = reports.map((report) =>
+        report.id === updatedReport.id ? updatedReport : report
+      );
+      setReports(newReports);
+
+      // Close modal
+      setIsEditModalOpen(false);
+    } catch (err) {
+      setError("Failed to update report");
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const portsData = await fetchPorts();
-        setPorts(portsData);
+
+        // Get user's port ID
+        const portId = await fetchUserPortId(currentUser?.uid || "");
+        if (!portId) {
+          setError("User port ID not found");
+          return;
+        }
+        setUserPortId(portId);
+
+        // Fetch reports
         const allReports = await fetchWeeklyPerformancesWithPort();
-        setReports(allReports);
-        console.log({
-          allReports,
-        });
+        // Filter reports for current port
+        const portReports = allReports.filter(
+          (report) => report.portId === portId
+        );
+        setReports(portReports);
+        console.log("Fetched reports:", portReports);
       } catch (err) {
         setError("Failed to load weekly reports");
       } finally {
@@ -41,13 +85,11 @@ const WeeklyPage: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [currentUser]);
 
-  // Filter reports based on port and date range
+  // Filter reports based on date range
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
-      if (selectedPortId !== "all" && report.portId !== selectedPortId)
-        return false;
       if (!fromDate && !toDate) return true;
       const createdAt = report.createdAt || report.created_at;
       const reportDate =
@@ -55,8 +97,10 @@ const WeeklyPage: React.FC = () => {
           ? new Date(createdAt.seconds * 1000)
           : null;
       if (!reportDate) return true;
+
       const fromDateObj = fromDate ? new Date(fromDate) : null;
       const toDateObj = toDate ? new Date(toDate) : null;
+
       if (fromDateObj && toDateObj) {
         toDateObj.setHours(23, 59, 59, 999);
         return reportDate >= fromDateObj && reportDate <= toDateObj;
@@ -68,9 +112,9 @@ const WeeklyPage: React.FC = () => {
       }
       return true;
     });
-  }, [reports, selectedPortId, fromDate, toDate]);
+  }, [reports, fromDate, toDate]);
 
-  // Summary calculation logic (moved inside component)
+  // Summary calculation logic
   const summary = useMemo(() => {
     const now = new Date();
     const lastWeekStart = new Date(now);
@@ -78,14 +122,15 @@ const WeeklyPage: React.FC = () => {
     lastWeekStart.setHours(0, 0, 0, 0);
     const lastWeekEnd = new Date(now);
     lastWeekEnd.setHours(23, 59, 59, 999);
+
     const isLastWeek = (report: any) => {
       const createdAt = report.createdAt || report.created_at;
       if (!createdAt || !createdAt.seconds) return false;
       const d = new Date(createdAt.seconds * 1000);
       return d >= lastWeekStart && d <= lastWeekEnd;
     };
+
     const totalVesselsLastWeek = filteredReports.filter(isLastWeek).length;
-    // Calculate total vessels in port (berthed - departed)
     const totalBerthedVessels = filteredReports.filter(
       (r) => r.berthedDate
     ).length;
@@ -93,7 +138,6 @@ const WeeklyPage: React.FC = () => {
       (r) => r.departureDate
     ).length;
     const totalVesselsInPort = totalBerthedVessels - totalDepartedVessels;
-
     const totalLoading = filteredReports.filter(
       (r) => r.status === "Loading"
     ).length;
@@ -103,14 +147,25 @@ const WeeklyPage: React.FC = () => {
     const totalDepartedLastWeek = filteredReports.filter(
       (r) => Boolean(r.departureDate) && isLastWeek(r)
     ).length;
-    const totalDemurrages = filteredReports.reduce(
-      (sum, r) => sum + (Number(r.demurragesCollected) || 0),
-      0
-    );
-    const totalCargoHandled = filteredReports.reduce(
-      (sum, r) => sum + (Number(r.totalQuantity) || 0),
-      0
-    );
+
+    const totalDemurrages = filteredReports.reduce((sum, r) => {
+      const dailyDemurrages =
+        r.dailyData?.reduce(
+          (total: number, day: any) => total + (Number(day.demurrages) || 0),
+          0
+        ) || 0;
+      return sum + dailyDemurrages;
+    }, 0);
+
+    const totalCargoHandled = filteredReports.reduce((sum, r) => {
+      const dailyQuantities =
+        r.dailyData?.reduce(
+          (total: number, day: any) => total + (Number(day.totalQuantity) || 0),
+          0
+        ) || 0;
+      return sum + dailyQuantities;
+    }, 0);
+
     const bulkCargo = filteredReports.filter(
       (r) => r.cargoType === "Bulk"
     ).length;
@@ -126,12 +181,7 @@ const WeeklyPage: React.FC = () => {
     const liquidCargo = filteredReports.filter(
       (r) => r.cargoType === "Liquid"
     ).length;
-    const totalAppliedClearance = filteredReports.filter((r) =>
-      Boolean(r.clearanceIssued)
-    ).length;
-    const totalIssuedClearance = filteredReports.filter((r) =>
-      Boolean(r.clearanceIssued)
-    ).length;
+
     return [
       {
         description: "Total number of vessels called in the last week",
@@ -164,23 +214,21 @@ const WeeklyPage: React.FC = () => {
       },
       {
         description: "Cargo handled in the last week",
-        total: filteredReports
-          .filter(isLastWeek)
-          .reduce((sum, r) => sum + (Number(r.totalQuantity) || 0), 0),
+        total: filteredReports.filter(isLastWeek).reduce((sum, r) => {
+          const dailyQuantities =
+            r.dailyData?.reduce(
+              (total: number, day: any) =>
+                total + (Number(day.totalQuantity) || 0),
+              0
+            ) || 0;
+          return sum + dailyQuantities;
+        }, 0),
       },
       { description: "Bulk cargo", total: bulkCargo },
       { description: "Break Bulk", total: breakBulk },
       { description: "Container (in TEU & MMT)", total: container },
       { description: "Project cargo", total: projectCargo },
       { description: "Liquid cargo", total: liquidCargo },
-      {
-        description: "Total number of vessels applied for clearance",
-        total: totalAppliedClearance,
-      },
-      {
-        description: "Total number of clearances issued",
-        total: totalIssuedClearance,
-      },
     ];
   }, [filteredReports]);
 
@@ -212,7 +260,7 @@ const WeeklyPage: React.FC = () => {
   return (
     <DashboardLayout
       title="Weekly Reports"
-      subtitle="View and manage all weekly vessel performance reports"
+      subtitle="View and manage your port's weekly vessel performance reports"
       icon={<Ship className="h-6 w-6 text-seagreen-600" />}
     >
       <Card
@@ -220,24 +268,7 @@ const WeeklyPage: React.FC = () => {
         icon={<Calendar className="h-6 w-6 text-seagreen-600" />}
         className="mb-6"
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Port
-            </label>
-            <select
-              value={selectedPortId}
-              onChange={(e) => setSelectedPortId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
-            >
-              <option value="all">All Ports</option>
-              {ports.map((port) => (
-                <option key={port.id} value={port.id}>
-                  {port.portName}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <DateRangePicker
               fromDate={fromDate}
@@ -250,12 +281,10 @@ const WeeklyPage: React.FC = () => {
           </div>
         </div>
 
-        {(fromDate || toDate || selectedPortId !== "all") && (
+        {(fromDate || toDate) && (
           <div className="mt-4 flex items-center justify-between bg-seagreen-50 p-3 rounded-lg">
             <p className="text-sm text-seagreen-700">
               Showing {filteredReports.length} reports
-              {selectedPortId !== "all" &&
-                ` from ${ports.find((p) => p.id === selectedPortId)?.portName}`}
               {fromDate && toDate
                 ? ` between ${new Date(
                     fromDate
@@ -272,7 +301,6 @@ const WeeklyPage: React.FC = () => {
               onClick={() => {
                 setFromDate("");
                 setToDate("");
-                setSelectedPortId("all");
               }}
               className="text-sm text-seagreen-600 hover:text-seagreen-800 font-medium"
             >
@@ -281,8 +309,6 @@ const WeeklyPage: React.FC = () => {
           </div>
         )}
       </Card>
-
-      {/* Summary table removed as requested */}
 
       <Card
         title="Weekly Performance Reports"
@@ -331,9 +357,6 @@ const WeeklyPage: React.FC = () => {
                     Vessel Name
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Port
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Agent Name
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -344,15 +367,6 @@ const WeeklyPage: React.FC = () => {
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cargo Type
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type of Cargo
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Quantity
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     DWT
@@ -367,10 +381,10 @@ const WeeklyPage: React.FC = () => {
                     Departure Date
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Demurrages
+                    Clearance Status
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Clearance Status
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -379,9 +393,6 @@ const WeeklyPage: React.FC = () => {
                   <tr key={report.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       {report.vesselName || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {report.port?.portName || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {report.agentName || "N/A"}
@@ -396,15 +407,6 @@ const WeeklyPage: React.FC = () => {
                       {report.status || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {report.cargoType || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {report.typeOfCargo || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {report.totalQuantity ?? "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       {report.dwt || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -417,10 +419,22 @@ const WeeklyPage: React.FC = () => {
                       {report.departureDate || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {report.demurragesCollected ?? "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       {report.clearanceIssued || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleViewReport(report)}
+                        className="mr-2"
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleEditReport(report)}
+                      >
+                        Edit
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -429,8 +443,23 @@ const WeeklyPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* View Modal */}
+      <ViewReportModal
+        report={selectedReport}
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+      />
+
+      {/* Edit Modal */}
+      <EditReportModal
+        report={selectedReport}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleUpdateReport}
+      />
     </DashboardLayout>
   );
 };
 
-export default WeeklyPage;
+export default WeeklyPerformance;

@@ -12,6 +12,7 @@ const WeeklyPerofmaceForm: React.FC = () => {
   const { currentUser } = useAuth();
   const [form, setForm] = useState({
     vesselName: "",
+    imoNumber: "",
     ownerDetails: "",
     loa: "",
     agentName: "",
@@ -19,10 +20,13 @@ const WeeklyPerofmaceForm: React.FC = () => {
     otherPurposeOfArrival: "",
     berthedDate: "",
     dwt: "",
-    cargoType: "",
-    typeOfCargo: "",
-    totalQuantity: "",
-    demurragesCollected: "",
+    dailyData: Array(7).fill({
+      date: "",
+      cargoType: "",
+      typeOfCargo: "",
+      totalQuantity: "",
+      demurrages: "",
+    }),
     status: "Loading",
     clearanceIssued: "",
     departureDate: "",
@@ -68,6 +72,16 @@ const WeeklyPerofmaceForm: React.FC = () => {
       // If 'Other' is selected, use the text field value for purposeOfArrival
       const { otherPurposeOfArrival, ...rest } = form;
 
+      const totalQuantity = form.dailyData.reduce(
+        (sum, day) => sum + (Number(day.totalQuantity) || 0),
+        0
+      );
+
+      const totalDemurrages = form.dailyData.reduce(
+        (sum, day) => sum + (Number(day.demurrages) || 0),
+        0
+      );
+
       const dataToSave = {
         ...rest,
         purposeOfArrival:
@@ -75,16 +89,17 @@ const WeeklyPerofmaceForm: React.FC = () => {
             ? form.otherPurposeOfArrival
             : form.purposeOfArrival,
         portId: userPortId,
-        totalQuantity: form.totalQuantity ? Number(form.totalQuantity) : 0,
-        demurragesCollected: form.demurragesCollected
-          ? Number(form.demurragesCollected)
-          : 0,
+        dailyData: form.dailyData,
+        totalQuantity,
+        demurragesCollected: totalDemurrages,
+        status: form.status,
       };
 
       await addWeeklyPerformance(dataToSave, userPortId);
       toast.success("Weekly performance submitted!");
       setForm({
         vesselName: "",
+        imoNumber: "",
         ownerDetails: "",
         loa: "",
         agentName: "",
@@ -92,10 +107,13 @@ const WeeklyPerofmaceForm: React.FC = () => {
         otherPurposeOfArrival: "",
         berthedDate: "",
         dwt: "",
-        cargoType: "",
-        typeOfCargo: "",
-        totalQuantity: "",
-        demurragesCollected: "",
+        dailyData: Array(7).fill({
+          date: "",
+          cargoType: "",
+          typeOfCargo: "",
+          totalQuantity: "",
+          demurrages: "",
+        }),
         status: "Loading",
         clearanceIssued: "",
         departureDate: "",
@@ -133,6 +151,23 @@ const WeeklyPerofmaceForm: React.FC = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
               required
               placeholder="Enter vessel name"
+            />
+          </FormField>
+          <FormField
+            id="imoNumber"
+            label="IMO Number *"
+            required
+            icon={<Ship className="h-5 w-5 text-seagreen-500" />}
+          >
+            <input
+              type="text"
+              id="imoNumber"
+              name="imoNumber"
+              value={form.imoNumber}
+              onChange={handleChange}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+              required
+              placeholder="Enter IMO number"
             />
           </FormField>
           <FormField
@@ -244,64 +279,142 @@ const WeeklyPerofmaceForm: React.FC = () => {
               placeholder="Enter DWT"
             />
           </FormField>
-          <FormField
-            id="cargoType"
-            label="Type of Cargo in Detail"
-            required
-            icon={<Package className="h-5 w-5 text-seagreen-500" />}
-          >
-            <select
-              id="cargoType"
-              name="cargoType"
-              value={form.cargoType}
-              onChange={handleSelectChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
-              required
-            >
-              <option value="">Select cargo type</option>
-              {cargoTypes.map((type) => (
-                <option key={type.id} value={type.name}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField
-            id="typeOfCargo"
-            label="Type of Cargo"
-            icon={<Package className="h-5 w-5 text-seagreen-500" />}
-          >
-            <input
-              type="text"
-              id="typeOfCargo"
-              name="typeOfCargo"
-              value={form.typeOfCargo}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
-              placeholder="Enter type of cargo"
-            />
-          </FormField>
-          <FormField
-            id="totalQuantity"
-            label="Total quantity loaded/unloaded (Sat-Fri)"
-            icon={<Package className="h-5 w-5 text-seagreen-500" />}
-          >
-            <input
-              type="number"
-              id="totalQuantity"
-              name="totalQuantity"
-              value={form.totalQuantity}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
-              placeholder="Enter total quantity"
-              min="0"
-            />
-          </FormField>
-          {/* Status Dropdown */}
+          <div className="col-span-2">
+            <h3 className="text-lg font-medium mb-4">Daily Cargo Details</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Type of Cargo in Detail
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Type of Cargo
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Quantity
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Demurrages
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {form.dailyData.map((day, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2">
+                        <input
+                          type="date"
+                          value={day.date}
+                          onChange={(e) => {
+                            const newDailyData = [...form.dailyData];
+                            newDailyData[index] = {
+                              ...day,
+                              date: e.target.value,
+                            };
+                            setForm((prev) => ({
+                              ...prev,
+                              dailyData: newDailyData,
+                            }));
+                          }}
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <select
+                          value={day.cargoType}
+                          onChange={(e) => {
+                            const newDailyData = [...form.dailyData];
+                            newDailyData[index] = {
+                              ...day,
+                              cargoType: e.target.value,
+                            };
+                            setForm((prev) => ({
+                              ...prev,
+                              dailyData: newDailyData,
+                            }));
+                          }}
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                        >
+                          <option value="">Select cargo type</option>
+                          {cargoTypes.map((type) => (
+                            <option key={type.id} value={type.name}>
+                              {type.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={day.typeOfCargo}
+                          onChange={(e) => {
+                            const newDailyData = [...form.dailyData];
+                            newDailyData[index] = {
+                              ...day,
+                              typeOfCargo: e.target.value,
+                            };
+                            setForm((prev) => ({
+                              ...prev,
+                              dailyData: newDailyData,
+                            }));
+                          }}
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                          placeholder="Enter type"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          value={day.totalQuantity}
+                          onChange={(e) => {
+                            const newDailyData = [...form.dailyData];
+                            newDailyData[index] = {
+                              ...day,
+                              totalQuantity: e.target.value,
+                            };
+                            setForm((prev) => ({
+                              ...prev,
+                              dailyData: newDailyData,
+                            }));
+                          }}
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                          placeholder="Enter quantity"
+                          min="0"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          value={day.demurrages}
+                          onChange={(e) => {
+                            const newDailyData = [...form.dailyData];
+                            newDailyData[index] = {
+                              ...day,
+                              demurrages: e.target.value,
+                            };
+                            setForm((prev) => ({
+                              ...prev,
+                              dailyData: newDailyData,
+                            }));
+                          }}
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                          placeholder="Enter demurrages"
+                          min="0"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
           <FormField
             id="status"
-            label="Status"
+            label="Vessel Status"
             required
             icon={<Package className="h-5 w-5 text-seagreen-500" />}
           >
@@ -317,22 +430,6 @@ const WeeklyPerofmaceForm: React.FC = () => {
               <option value="Discharging">Discharging</option>
               <option value="Completed">Completed</option>
             </select>
-          </FormField>
-          <FormField
-            id="demurragesCollected"
-            label="Demurrages Collected"
-            icon={<Package className="h-5 w-5 text-seagreen-500" />}
-          >
-            <input
-              type="number"
-              id="demurragesCollected"
-              name="demurragesCollected"
-              value={form.demurragesCollected}
-              onChange={handleChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
-              placeholder="Enter demurrages collected"
-              min="0"
-            />
           </FormField>
           <FormField
             id="clearanceIssued"
