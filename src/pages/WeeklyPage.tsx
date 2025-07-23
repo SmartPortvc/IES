@@ -12,8 +12,11 @@ import {
   WeeklySummary,
 } from "../utils/excelExport";
 import Button from "../components/ui/Button";
-// ...existing code...
+import ViewReportModal from "../components/vessel/ViewReportModal";
+
 const WeeklyPage: React.FC = () => {
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [ports, setPorts] = useState<Port[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,10 +98,10 @@ const WeeklyPage: React.FC = () => {
     const totalVesselsInPort = totalBerthedVessels - totalDepartedVessels;
 
     const totalLoading = filteredReports.filter(
-      (r) => r.status === "Loading"
+      (r) => r.purposeOfArrival.toLowerCase() === "loading"
     ).length;
     const totalUnloading = filteredReports.filter(
-      (r) => r.status === "Unloading"
+      (r) => r.purposeOfArrival.toLowerCase() === "unloading"
     ).length;
     const totalDepartedLastWeek = filteredReports.filter(
       (r) => Boolean(r.departureDate) && isLastWeek(r)
@@ -372,6 +375,9 @@ const WeeklyPage: React.FC = () => {
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Clearance Status
                   </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -422,6 +428,17 @@ const WeeklyPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {report.clearanceIssued || "N/A"}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedReport(report);
+                          setIsViewModalOpen(true);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -429,6 +446,13 @@ const WeeklyPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* View Modal */}
+      <ViewReportModal
+        report={selectedReport}
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+      />
     </DashboardLayout>
   );
 };
