@@ -60,25 +60,6 @@ const createStyles = () => ({
   },
 });
 
-// Helper function to apply styles to a worksheet
-const applyStyles = (ws: XLSX.WorkSheet, styles: any) => {
-  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
-  for (let R = range.s.r; R <= range.e.r; ++R) {
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-      if (!ws[cellRef]) continue;
-
-      if (R === 0 || R === range.s.r + summaryTable.length + 2) {
-        // Apply header style to both table headers
-        ws[cellRef].s = styles.headerStyle;
-      } else {
-        // Apply regular cell style
-        ws[cellRef].s = styles.cellStyle;
-      }
-    }
-  }
-};
-
 // Helper to set column widths
 const setColumnWidths = (ws: XLSX.WorkSheet, widths: number[]) => {
   ws["!cols"] = widths.map((w) => ({ wch: w }));
@@ -133,8 +114,11 @@ export function exportWeeklySummaryAndReports(
     ]),
   ];
 
-  // Add title for reports section
-  const reportsTitle = [["WEEKLY PERFORMANCE REPORTS"]];
+  // Separate reports with and without clearance
+  const clearedReports = reports.filter((r) => r.clearanceIssued);
+  const pendingReports = reports.filter((r) => !r.clearanceIssued);
+
+  // Common headers for both sections
   const reportHeaders = [
     "Vessel Name",
     "Port",
@@ -152,32 +136,102 @@ export function exportWeeklySummaryAndReports(
     "Demurrages Collected",
     "Clearance Status",
   ];
-  const reportRows = reports.map((r) => [
-    r.vesselName || "",
-    r.port?.portName || "",
-    r.agentName || "",
-    r.ownerDetails || "",
-    r.purposeOfArrival || "",
-    r.status || "",
-    r.cargoType || "",
-    r.typeOfCargo || "",
-    formatNumber(r.totalQuantity) ?? "",
-    r.dwt || "",
-    r.loa || "",
-    formatDate(r.berthedDate) || "",
-    formatDate(r.departureDate) || "",
-    formatNumber(r.demurragesCollected) ?? "",
-    formatDate(r.clearanceIssued) || "",
-  ]);
+
+  // Daily data headers
+  const dailyHeaders = [
+    "Date",
+    "Cargo Type",
+    "Type of Cargo",
+    "Total Quantity",
+    "Demurrages",
+  ];
+
+  // Function to format report data
+  const formatReportData = (reports: any[]) => {
+    const rows: any[] = [];
+    reports.forEach((r) => {
+      // Main report row
+      const mainRow = [
+        r.vesselName || "-",
+        r.port?.portName || "-",
+        r.agentName || "-",
+        r.ownerDetails || "-",
+        r.purposeOfArrival || "-",
+        r.status || "-",
+        r.cargoType || "-",
+        r.typeOfCargo || "-",
+        formatNumber(r.totalQuantity) ?? "-",
+        r.dwt || "-",
+        r.loa || "-",
+        formatDate(r.berthedDate) || "-",
+        formatDate(r.departureDate) || "-",
+        formatNumber(r.demurragesCollected) ?? "-",
+        formatDate(r.clearanceIssued) || "-",
+      ];
+      rows.push(mainRow);
+
+      // Daily data rows with indent
+      if (r.dailyData && Array.isArray(r.dailyData) && r.dailyData.length > 0) {
+        // Add daily data header with proper indentation
+        const dailyHeaderRow = Array(
+          reportHeaders.length - dailyHeaders.length
+        ).fill("");
+        rows.push([...dailyHeaderRow, ...dailyHeaders.map(String)]);
+
+        // Add daily data rows
+        r.dailyData.forEach((daily: any) => {
+          if (
+            daily &&
+            (daily.date ||
+              daily.cargoType ||
+              daily.typeOfCargo ||
+              daily.totalQuantity ||
+              daily.demurrages)
+          ) {
+            const dailyDataRow = Array(
+              reportHeaders.length - dailyHeaders.length
+            ).fill("");
+            rows.push([
+              ...dailyDataRow,
+              String(formatDate(daily.date) || "-"),
+              String(daily.cargoType || "-"),
+              String(daily.typeOfCargo || "-"),
+              String(formatNumber(daily.totalQuantity) || "-"),
+              String(formatNumber(daily.demurrages) || "-"),
+            ]);
+          }
+        });
+
+        // Add spacing row
+        rows.push(Array(reportHeaders.length).fill(""));
+      }
+    });
+    return rows;
+  };
+
+  // Create sections for cleared and pending reports
+  const clearedReportsTitle =
+    clearedReports.length > 0
+      ? [[String("WEEKLY PERFORMANCE REPORTS - CLEARED VESSELS")]]
+      : [];
+  const pendingReportsTitle =
+    pendingReports.length > 0
+      ? [[String("WEEKLY PERFORMANCE REPORTS - PENDING CLEARANCE")]]
+      : [];
+
+  const clearedReportRows = formatReportData(clearedReports);
+  const pendingReportRows = formatReportData(pendingReports);
 
   const combinedSheetData = [
     ...summaryTable,
     [],
     [], // Add spacing
-    ...reportsTitle,
-    [],
-    reportHeaders,
-    ...reportRows,
+    ...(clearedReports.length > 0
+      ? [...clearedReportsTitle, [], reportHeaders, ...clearedReportRows, []]
+      : []),
+    ...(pendingReports.length > 0
+      ? [...pendingReportsTitle, [], reportHeaders, ...pendingReportRows]
+      : []),
   ];
 
   const combinedSheet = XLSX.utils.aoa_to_sheet(combinedSheetData);
@@ -201,21 +255,82 @@ export function exportWeeklySummaryAndReports(
     15, // Clearance Status
   ]);
 
-  // Apply styles
-  applyStyles(combinedSheet, styles);
+  // Apply styles with special handling for daily data
+  const ws = combinedSheet;
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[cellRef]) continue;
+
+      const cellValue = ws[cellRef].v;
+      if (R === 0) {
+        // Summary title
+        ws[cellRef].s = styles.titleStyle;
+      } else if (
+        cellValue === "WEEKLY PERFORMANCE REPORTS - CLEARED VESSELS" ||
+        cellValue === "WEEKLY PERFORMANCE REPORTS - PENDING CLEARANCE"
+      ) {
+        // Section titles
+        ws[cellRef].s = styles.titleStyle;
+      } else if (
+        cellValue === "Date" ||
+        cellValue === "Cargo Type" ||
+        cellValue === "Type of Cargo" ||
+        cellValue === "Total Quantity" ||
+        cellValue === "Demurrages"
+      ) {
+        // Daily data headers - slightly different style
+        ws[cellRef].s = {
+          ...styles.headerStyle,
+          fill: { fgColor: { rgb: "E2E8F0" } }, // Lighter background for sub-headers
+        };
+      } else if (
+        [
+          "Vessel Name",
+          "Port",
+          "Agent Name",
+          "Owner Details",
+          "Purpose of Arrival",
+          "Status",
+          "DWT",
+          "LOA",
+          "Berthed Date",
+          "Departure Date",
+          "Clearance Status",
+        ].includes(cellValue)
+      ) {
+        // Main headers
+        ws[cellRef].s = styles.headerStyle;
+      } else {
+        // Regular cells
+        ws[cellRef].s = styles.cellStyle;
+      }
+    }
+  }
 
   // Create workbook
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, combinedSheet, "Weekly Report");
 
-  // Set sheet properties for better visual appearance
-  const ws = wb.Sheets["Weekly Report"];
-
-  // Add title styles
-  if (ws.A1) ws.A1.s = styles.titleStyle; // Summary title
-  const reportsTitleRow = summaryTable.length + 3;
-  const reportsTitleCell = XLSX.utils.encode_cell({ r: reportsTitleRow, c: 0 });
-  if (ws[reportsTitleCell]) ws[reportsTitleCell].s = styles.titleStyle;
+  // Set custom row heights
+  ws["!rows"] = Array(range.e.r + 1)
+    .fill(null)
+    .map((_, i) => {
+      if (
+        combinedSheetData[i] &&
+        Array.isArray(combinedSheetData[i]) &&
+        combinedSheetData[i][0] &&
+        typeof combinedSheetData[i][0] === "string" &&
+        combinedSheetData[i][0].includes("WEEKLY PERFORMANCE")
+      ) {
+        return { hpt: 35 }; // Title rows
+      } else if (i === 0) {
+        // First row (Summary title)
+        return { hpt: 35 }; // Title row height
+      }
+      return { hpt: 25 }; // Regular rows
+    });
 
   // Set custom row heights
   ws["!rows"] = Array(combinedSheetData.length)

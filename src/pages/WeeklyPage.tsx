@@ -73,6 +73,31 @@ const WeeklyPage: React.FC = () => {
     });
   }, [reports, selectedPortId, fromDate, toDate]);
 
+  function getCargoSumsByType(data) {
+    const cargoSums = {
+      Container: 0,
+      "Break Bulk": 0,
+      Project: 0,
+      "Liquid Bulk": 0,
+      "Dry Bulk": 0,
+    };
+
+    for (const vessel of data) {
+      if (!vessel.clearanceIssued) continue;
+
+      for (const entry of vessel.dailyData) {
+        const type = entry.cargoType;
+        const quantity = parseFloat(entry.totalQuantity);
+
+        if (!isNaN(quantity) && cargoSums.hasOwnProperty(type)) {
+          cargoSums[type] += quantity;
+        }
+      }
+    }
+
+    return cargoSums;
+  }
+
   // Summary calculation logic (moved inside component)
   const summary = useMemo(() => {
     const now = new Date();
@@ -98,10 +123,14 @@ const WeeklyPage: React.FC = () => {
     const totalVesselsInPort = totalBerthedVessels - totalDepartedVessels;
 
     const totalLoading = filteredReports.filter(
-      (r) => r.purposeOfArrival.toLowerCase() === "loading"
+      (r) =>
+        r.purposeOfArrival.toLowerCase() === "loading" &&
+        Boolean(r.clearanceIssued)
     ).length;
     const totalUnloading = filteredReports.filter(
-      (r) => r.purposeOfArrival.toLowerCase() === "unloading"
+      (r) =>
+        r.purposeOfArrival.toLowerCase() === "unloading" &&
+        Boolean(r.clearanceIssued)
     ).length;
     const totalDepartedLastWeek = filteredReports.filter(
       (r) => Boolean(r.departureDate) && isLastWeek(r)
@@ -114,27 +143,39 @@ const WeeklyPage: React.FC = () => {
       (sum, r) => sum + (Number(r.totalQuantity) || 0),
       0
     );
-    const bulkCargo = filteredReports.filter(
-      (r) => r.cargoType === "Bulk"
-    ).length;
-    const breakBulk = filteredReports.filter(
-      (r) => r.cargoType === "Break Bulk"
-    ).length;
-    const container = filteredReports.filter(
-      (r) => r.cargoType === "Container"
-    ).length;
-    const projectCargo = filteredReports.filter(
-      (r) => r.cargoType === "Project"
-    ).length;
-    const liquidCargo = filteredReports.filter(
-      (r) => r.cargoType === "Liquid"
-    ).length;
+
+    const {
+      Container: container,
+      "Break Bulk": breakBulk,
+      Project: projectCargo,
+      "Liquid Bulk": liquidCargo,
+      "Dry Bulk": bulkCargo,
+    } = getCargoSumsByType(filteredReports);
+
     const totalAppliedClearance = filteredReports.filter((r) =>
       Boolean(r.clearanceIssued)
     ).length;
     const totalIssuedClearance = filteredReports.filter((r) =>
       Boolean(r.clearanceIssued)
     ).length;
+
+    console.log({
+      totalVesselsLastWeek,
+      totalVesselsInPort,
+      totalLoading,
+      totalUnloading,
+      totalDepartedLastWeek,
+      totalDemurrages,
+      totalCargoHandled,
+      bulkCargo,
+      breakBulk,
+      container,
+      projectCargo,
+      liquidCargo,
+      totalAppliedClearance,
+      totalIssuedClearance,
+    });
+
     return [
       {
         description: "Total number of vessels called in the last week",
@@ -167,9 +208,7 @@ const WeeklyPage: React.FC = () => {
       },
       {
         description: "Cargo handled in the last week",
-        total: filteredReports
-          .filter(isLastWeek)
-          .reduce((sum, r) => sum + (Number(r.totalQuantity) || 0), 0),
+        total: breakBulk + bulkCargo + container + projectCargo + liquidCargo,
       },
       { description: "Bulk cargo", total: bulkCargo },
       { description: "Break Bulk", total: breakBulk },
@@ -284,8 +323,6 @@ const WeeklyPage: React.FC = () => {
           </div>
         )}
       </Card>
-
-      {/* Summary table removed as requested */}
 
       <Card
         title="Weekly Performance Reports"
