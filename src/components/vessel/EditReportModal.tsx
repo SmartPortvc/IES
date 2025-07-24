@@ -53,7 +53,7 @@ const EditReportModal: React.FC<EditReportModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
@@ -139,10 +139,10 @@ const EditReportModal: React.FC<EditReportModalProps> = ({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4  py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 w-40 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Type of Cargo in Detail
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -152,7 +152,10 @@ const EditReportModal: React.FC<EditReportModalProps> = ({
                       Quantity
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Demurrages
+                      Demarage charges collected from the ship in Rs.
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Reason
                     </th>
                   </tr>
                 </thead>
@@ -232,6 +235,21 @@ const EditReportModal: React.FC<EditReportModalProps> = ({
                           }
                           className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
                           placeholder="Enter demurrages"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={day.reason || ""}
+                          onChange={(e) =>
+                            handleDailyDataChange(
+                              index,
+                              "reason",
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                          placeholder="Enter Reason"
                         />
                       </td>
                     </tr>

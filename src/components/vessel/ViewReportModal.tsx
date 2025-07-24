@@ -16,7 +16,7 @@ const ViewReportModal: React.FC<ViewReportModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full  max-h-[800px] overflow-x-scroll mx-4">
+      <div className="bg-white rounded-lg p-6 max-w-5xl w-full  max-h-[800px] overflow-x-scroll mx-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Weekly Performance Report</h2>
           <button
@@ -100,7 +100,7 @@ const ViewReportModal: React.FC<ViewReportModalProps> = ({
               <table className="min-w-full">
                 <thead className="bg-gray-100 rounded-t-lg">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">
+                    <th className="px-6 w-36 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">
                       Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -113,7 +113,10 @@ const ViewReportModal: React.FC<ViewReportModalProps> = ({
                       Total Quantity
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">
-                      Demurrages
+                      Demarage charges collected from the ship in Rs
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">
+                      Reason
                     </th>
                   </tr>
                 </thead>
@@ -146,6 +149,11 @@ const ViewReportModal: React.FC<ViewReportModalProps> = ({
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">
                           {day.demurrages || "-"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {day.reason || "-"}
                         </div>
                       </td>
                     </tr>

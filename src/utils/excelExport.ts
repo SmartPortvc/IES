@@ -158,8 +158,6 @@ export function exportWeeklySummaryAndReports(
         r.ownerDetails || "-",
         r.purposeOfArrival || "-",
         r.status || "-",
-        r.cargoType || "-",
-        r.typeOfCargo || "-",
         formatNumber(r.totalQuantity) ?? "-",
         r.dwt || "-",
         r.loa || "-",
@@ -186,7 +184,8 @@ export function exportWeeklySummaryAndReports(
               daily.cargoType ||
               daily.typeOfCargo ||
               daily.totalQuantity ||
-              daily.demurrages)
+              daily.demurrages ||
+              daily.reason)
           ) {
             const dailyDataRow = Array(
               reportHeaders.length - dailyHeaders.length
@@ -198,6 +197,7 @@ export function exportWeeklySummaryAndReports(
               String(daily.typeOfCargo || "-"),
               String(formatNumber(daily.totalQuantity) || "-"),
               String(formatNumber(daily.demurrages) || "-"),
+              String(daily.reason || "-"),
             ]);
           }
         });

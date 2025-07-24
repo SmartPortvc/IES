@@ -159,23 +159,6 @@ const WeeklyPage: React.FC = () => {
       Boolean(r.clearanceIssued)
     ).length;
 
-    console.log({
-      totalVesselsLastWeek,
-      totalVesselsInPort,
-      totalLoading,
-      totalUnloading,
-      totalDepartedLastWeek,
-      totalDemurrages,
-      totalCargoHandled,
-      bulkCargo,
-      breakBulk,
-      container,
-      projectCargo,
-      liquidCargo,
-      totalAppliedClearance,
-      totalIssuedClearance,
-    });
-
     return [
       {
         description: "Total number of vessels called in the last week",

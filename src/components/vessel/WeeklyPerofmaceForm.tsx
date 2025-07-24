@@ -298,7 +298,10 @@ const WeeklyPerofmaceForm: React.FC = () => {
                       Quantity
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Demurrages
+                      Demarage charges collected from the ship in Rs.
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Reason
                     </th>
                   </tr>
                 </thead>
@@ -404,6 +407,25 @@ const WeeklyPerofmaceForm: React.FC = () => {
                           className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
                           placeholder="Enter demurrages"
                           min="0"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="text"
+                          value={day.reason}
+                          onChange={(e) => {
+                            const newDailyData = [...form.dailyData];
+                            newDailyData[index] = {
+                              ...day,
+                              reason: e.target.value,
+                            };
+                            setForm((prev) => ({
+                              ...prev,
+                              dailyData: newDailyData,
+                            }));
+                          }}
+                          className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-seagreen-500"
+                          placeholder="Enter Reason"
                         />
                       </td>
                     </tr>
