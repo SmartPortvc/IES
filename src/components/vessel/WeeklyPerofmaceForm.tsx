@@ -20,13 +20,16 @@ const WeeklyPerofmaceForm: React.FC = () => {
     otherPurposeOfArrival: "",
     berthedDate: "",
     dwt: "",
-    dailyData: Array(7).fill({
-      date: "",
-      cargoType: "",
-      typeOfCargo: "",
-      totalQuantity: "",
-      demurrages: "",
-    }),
+    dailyData: [
+      {
+        date: "",
+        cargoType: "",
+        typeOfCargo: "",
+        totalQuantity: "",
+        demurrages: "",
+        reason: "",
+      },
+    ],
     status: "Loading",
     clearanceIssued: "",
     departureDate: "",
@@ -280,7 +283,33 @@ const WeeklyPerofmaceForm: React.FC = () => {
             />
           </FormField>
           <div className="col-span-2">
-            <h3 className="text-lg font-medium mb-4">Daily Cargo Details</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium mb-4">Daily Cargo Details</h3>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm((prev) => ({
+                      ...prev,
+                      dailyData: [
+                        ...prev.dailyData,
+                        {
+                          date: "",
+                          cargoType: "",
+                          typeOfCargo: "",
+                          totalQuantity: "",
+                          demurrages: "",
+                          reason: "",
+                        },
+                      ],
+                    }));
+                  }}
+                  className="px-4 py-2 text-white bg-seagreen-600 hover:bg-seagreen-700 rounded-md transition"
+                >
+                  + Add Row
+                </button>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
