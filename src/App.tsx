@@ -37,14 +37,6 @@ const WeeklyPage = lazy(() => import("./pages/WeeklyPage"));
 
 function App() {
   useEffect(() => {
-    setupAdminAccount().then((created) => {
-      if (created) {
-        console.log("Admin account has been created");
-      } else {
-        console.log("Admin account already exists or could not be created");
-      }
-    });
-
     initEmailService();
   }, []);
 
