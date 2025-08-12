@@ -254,7 +254,7 @@ export const VesselGeneralInfo: React.FC<VesselGeneralInfoProps> = ({
 
         <FormField
           id="vesselAgent"
-          label="Vessel Agent"
+          label="Agent Name"
           icon={<Ship className="h-5 w-5 text-seagreen-500" />}
         >
           <input
@@ -362,7 +362,7 @@ export const VesselGeneralInfo: React.FC<VesselGeneralInfoProps> = ({
 
         <FormField
           id="sailedOutDate"
-          label="Vessel Sailed Out Date"
+          label="Vessel Departure Date"
           icon={<Calendar className="h-5 w-5 text-seagreen-500" />}
         >
           <input
@@ -619,7 +619,7 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
         id="operationType"
-        label="Operation Type"
+        label="Purpose of Arrival"
         required
         icon={<Ship className="h-5 w-5 text-seagreen-500" />}
       >
@@ -726,7 +726,7 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
         id="cargoType"
-        label="Cargo Type"
+        label="Cargo Name"
         required
         icon={<Package className="h-5 w-5 text-seagreen-500" />}
       >
