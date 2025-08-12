@@ -6,6 +6,7 @@ import {
   Anchor,
   ChevronLeft,
   ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import SidebarItem from "./SidebarItem";
@@ -87,8 +88,16 @@ const PortSidebar: React.FC = () => {
         <SidebarItem
           icon={<PlusCircle className="h-5 w-5" />}
           label="ADD WEEKLY REPORT"
-          onClick={() => navigate("/add-weekly-report")}
-          isActive={isActive("/add-weekly-report")}
+          onClick={() => navigate("/add-weekly-performance")}
+          isActive={isActive("/add-weekly-performance")}
+          collapsed={collapsed}
+        />
+
+        <SidebarItem
+          icon={<CalendarDays className="h-5 w-5" />}
+          label="WEEKLY REPORT"
+          onClick={() => navigate("/weekly-performance")}
+          isActive={isActive("/weekly-performance")}
           collapsed={collapsed}
         />
       </div>

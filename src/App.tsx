@@ -13,7 +13,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import { setupAdminAccount } from "./utils/setupAdmin";
 import { initEmailService } from "./utils/emailService";
-import AddWeeklyReport from "./pages/AddWeeklyReport";
+import AddWeeklyPerformance from "./pages/AddWeeklyPerfoma";
 
 // Lazy-loaded components
 const Login = lazy(() => import("./pages/Login"));
@@ -25,6 +25,7 @@ const HodRegistration = lazy(() => import("./pages/HodRegistration"));
 const PortDashboard = lazy(() => import("./pages/PortDashboard"));
 const PortDetailsView = lazy(() => import("./pages/PortDetailsView"));
 const PortProfile = lazy(() => import("./pages/PortProfile"));
+const WeeklyPerformance = lazy(() => import("./pages/WeeklyPerformance"));
 const AddVessel = lazy(() => import("./pages/AddVessel"));
 const ManageCargoTypes = lazy(() => import("./pages/ManageCargoTypes"));
 const VesselList = lazy(() => import("./pages/VesselList"));
@@ -32,17 +33,10 @@ const VesselDetails = lazy(() => import("./pages/VesselDetails"));
 const Revenue = lazy(() => import("./pages/Revenue"));
 const CargoHandled = lazy(() => import("./pages/CargoHandled"));
 const VesselsPage = lazy(() => import("./pages/VesselsPage"));
+const WeeklyPage = lazy(() => import("./pages/WeeklyPage"));
 
 function App() {
   useEffect(() => {
-    setupAdminAccount().then((created) => {
-      if (created) {
-        console.log("Admin account has been created");
-      } else {
-        console.log("Admin account already exists or could not be created");
-      }
-    });
-
     initEmailService();
   }, []);
 
@@ -86,6 +80,15 @@ function App() {
             />
 
             <Route
+              path="/admin/weekly"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <WeeklyPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/manage-cargo-types"
               element={
                 <ProtectedRoute requiredRole="admin">
@@ -124,6 +127,14 @@ function App() {
             />
 
             <Route
+              path="/weekly-performance"
+              element={
+                <ProtectedRoute requiredRole="port">
+                  <WeeklyPerformance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/port-profile"
               element={
                 <ProtectedRoute requiredRole="port">
@@ -131,7 +142,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/add-vessel"
               element={
@@ -141,10 +151,10 @@ function App() {
               }
             />
             <Route
-              path="/add-weekly-report"
+              path="/add-weekly-performance"
               element={
                 <ProtectedRoute requiredRole="port">
-                  <AddWeeklyReport />
+                  <AddWeeklyPerformance />
                 </ProtectedRoute>
               }
             />

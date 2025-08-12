@@ -1,19 +1,95 @@
-// Add Weekly Report API
-export const addWeeklyReport = async (reportData: any): Promise<string> => {
+// Fetch all weekly performances with port details
+// Update weekly performance report
+export const updateWeeklyPerformance = async (
+  reportId: string,
+  reportData: Partial<WeeklyPerformance>
+): Promise<void> => {
   try {
-    let portRef = null;
-    if (reportData.portId) {
-      portRef = doc(db, "ports", reportData.portId);
-    }
-    const formattedData = {
-      ...reportData,
-      portRef,
+    const reportRef = doc(db, "weeklyPerformances", reportId);
+    await updateDoc(reportRef, reportData);
+  } catch (error) {
+    console.error("Error updating weekly performance:", error);
+    throw error;
+  }
+};
+
+export const fetchWeeklyPerformancesWithPort = async (): Promise<
+  Array<WeeklyPerformance & { port?: Port }>
+> => {
+  try {
+    const snapshot = await getDocs(collection(db, "weeklyPerformances"));
+    const performances = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as (WeeklyPerformance & { id: string })[];
+    // Fetch all unique portIds
+    const portIds = Array.from(
+      new Set(performances.map((p) => p.portId).filter(Boolean))
+    );
+    const portMap: Record<string, Port> = {};
+    // Fetch all ports in parallel
+    await Promise.all(
+      portIds.map(async (portId) => {
+        const portDoc = await getDoc(doc(db, "ports", portId));
+        if (portDoc.exists()) {
+          portMap[portId] = { id: portDoc.id, ...portDoc.data() } as Port;
+        }
+      })
+    );
+
+    console.log({
+      performances,
+      portMap,
+    });
+
+    // Attach port details to each performance
+    return performances.map((perf) => ({
+      ...perf,
+      port: perf.portId ? portMap[perf.portId] : undefined,
+    }));
+  } catch (error) {
+    console.error(
+      "Error fetching weekly performances with port details:",
+      error
+    );
+    throw error;
+  }
+};
+// Weekly Performance API
+export interface WeeklyPerformance {
+  vesselName: string;
+  ownerDetails: string;
+  loa: string;
+  agentName: string;
+  purposeOfArrival: string;
+  berthedDate: string;
+  dwt: string;
+  cargoType: string;
+  typeOfCargo: string;
+  totalQuantity: number;
+  demurragesCollected: number;
+  status: string;
+  clearanceIssued: string;
+  departureDate: string;
+  createdAt?: any;
+  portId: string;
+}
+
+export const addWeeklyPerformance = async (
+  data: WeeklyPerformance,
+  portId: string
+): Promise<string> => {
+  try {
+    const docRef = await addDoc(collection(db, "weeklyPerformances"), {
+      ...data,
+      totalQuantity: Number(data.totalQuantity),
+      demurragesCollected: Number(data.demurragesCollected),
       createdAt: serverTimestamp(),
-    };
-    const docRef = await addDoc(collection(db, "weeklyReports"), formattedData);
+      portId,
+    });
     return docRef.id;
   } catch (error) {
-    console.error("Error adding weekly report:", error);
+    console.error("Error adding weekly performance:", error);
     throw error;
   }
 };
