@@ -10,7 +10,7 @@ export interface Port {
   unitizedBerths?: string;
   documents?: PortDocument[];
   locationLink?: string;
-  status?: 'invited' | 'registered';
+  status?: "invited" | "registered";
   createdAt?: any;
   invitationSentAt?: any;
   registeredAt?: any;
@@ -28,7 +28,7 @@ export interface PortDocument {
 export interface User {
   uid: string;
   email: string;
-  role: 'admin' | 'port' | 'hod';
+  role: "admin" | "port" | "hod";
   portId?: string;
   name?: string;
   designation?: string;
@@ -42,7 +42,7 @@ export interface HOD {
   name?: string;
   designation?: string;
   department?: string;
-  status?: 'invited' | 'registered';
+  status?: "invited" | "registered";
   createdAt?: any;
   invitationSentAt?: any;
   registeredAt?: any;
@@ -52,7 +52,7 @@ export interface HOD {
 export interface Vessel {
   id?: string;
   portId: string;
-  
+
   // General Information
   berthDetails: string;
   length: number;
@@ -62,7 +62,7 @@ export interface Vessel {
   vesselAgent?: string;
   entryDate: Date;
   sailedOutDate?: Date | null;
-  
+
   // Additional Fields
   imo: string;
   grt: string;
@@ -73,14 +73,15 @@ export interface Vessel {
   nextPortOfCall?: string;
   cargoQuantity: string;
   totalRevenue?: string;
-  voyageType: 'Coastal' | 'Foreign';
+  voyageType: "Coastal" | "Foreign";
   arrivalFrom: string;
-  
+
   // Static Data
   loa: number;
   beam?: number;
   dwt: number;
-  
+  clearanceIssuedOn: Date;
+
   // Draft Information
   arrivalDraft?: {
     forward: number;
@@ -90,19 +91,19 @@ export interface Vessel {
     forward: number;
     aft: number;
   };
-  
+
   // Operation Details
-  operationType: 'Import' | 'Export' | 'Coastal';
+  operationType: "Import" | "Export" | "Coastal";
   fromTo: string;
   location: string;
-  operation: 'Loading' | 'Unloading' | 'Transhipment' | 'Lighterage';
+  operation: "Loading" | "Unloading" | "Transhipment" | "Lighterage";
   cargo: {
     type: string;
     name: string;
     volume: number;
-    units: 'MT' | 'TEUs';
+    units: "MT" | "TEUs";
   };
-  
+
   // Metadata
   createdAt: any;
   updatedAt?: any;

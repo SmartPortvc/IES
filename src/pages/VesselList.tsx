@@ -81,6 +81,7 @@ const VesselListPage: React.FC = () => {
         loading={false}
         error={null}
         portName={portData.portName}
+        portId={portId}
         showExport={true}
       />
     </DashboardLayout>

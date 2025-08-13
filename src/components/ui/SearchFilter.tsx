@@ -1,6 +1,6 @@
-import React from 'react';
-import { Search, Filter } from 'lucide-react';
-import Button from './Button';
+import React from "react";
+import { Search, Filter } from "lucide-react";
+import Button from "./Button";
 
 interface SearchFilterProps {
   searchTerm: string;
@@ -16,19 +16,21 @@ interface SearchFilterProps {
   onExport?: () => void;
   exportLabel?: string;
   showExport?: boolean;
+  handleExportAllWeekly?: () => void;
 }
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
   searchTerm,
   setSearchTerm,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = "Search...",
   filterOptions,
   filterValue,
   setFilterValue,
-  filterLabel = 'Filter by',
+  filterLabel = "Filter by",
   onExport,
-  exportLabel = 'Export CSV',
-  showExport = false
+  exportLabel = "Export CSV",
+  showExport = false,
+  handleExportAllWeekly,
 }) => {
   return (
     <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -42,7 +44,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
           className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
         />
       </div>
-      
+
       <div className="flex items-center space-x-4">
         {filterOptions && filterValue !== undefined && setFilterValue && (
           <div className="flex items-center">
@@ -61,16 +63,58 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             </select>
           </div>
         )}
-        
+
         {showExport && onExport && (
           <Button
             variant="outline"
             onClick={onExport}
-            icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>}
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            }
           >
             {exportLabel}
           </Button>
         )}
+
+        {
+          <Button
+            variant="outline"
+            onClick={handleExportAllWeekly}
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            }
+          >
+            Export All Weekly
+          </Button>
+        }
       </div>
     </div>
   );

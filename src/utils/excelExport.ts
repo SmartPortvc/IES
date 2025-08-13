@@ -115,8 +115,12 @@ export function exportWeeklySummaryAndReports(
   ];
 
   // Separate reports with and without clearance
-  const clearedReports = reports.filter((r) => r.clearanceIssued);
-  const pendingReports = reports.filter((r) => !r.clearanceIssued);
+  const clearedReports = reports.filter(
+    (r) => r.clearanceIssuedOn || r.clearanceIssued
+  );
+  const pendingReports = reports.filter(
+    (r) => !r.clearanceIssuedOn && !r.clearanceIssued
+  );
 
   // Common headers for both sections
   const reportHeaders = [
@@ -124,86 +128,154 @@ export function exportWeeklySummaryAndReports(
     "Port",
     "Agent Name",
     "Owner Details",
-    "Purpose of Arrival",
+    "Operation/Purpose",
     "Status",
     "Cargo Type",
-    "Type of Cargo",
+    "Cargo Name",
     "Total Quantity",
     "DWT",
     "LOA",
     "Berthed Date",
     "Departure Date",
-    "Demurrages Collected",
-    "Clearance Status",
+    "Total Revenue/Demurrages",
+    "Clearance Date",
   ];
 
   // Daily data headers
   const dailyHeaders = [
     "Date",
     "Cargo Type",
-    "Type of Cargo",
-    "Total Quantity",
-    "Demurrages",
+    "Cargo Details",
+    "Quantity",
+    "Demurrage Charges",
+    "Reason",
   ];
 
   // Function to format report data
   const formatReportData = (reports: any[]) => {
     const rows: any[] = [];
     reports.forEach((r) => {
+      // Helper function to convert Firebase timestamp to date string
+      const formatFirebaseDate = (timestamp: any): string => {
+        if (!timestamp) return "-";
+        if (typeof timestamp === "string") return formatDate(timestamp);
+        if (timestamp.seconds) {
+          return formatDate(new Date(timestamp.seconds * 1000).toISOString());
+        }
+        return "-";
+      };
+
+      // Calculate total quantity from cargo or dailyCargoDetails
+      const getTotalQuantity = (report: any): number => {
+        if (report.totalQuantity) return report.totalQuantity;
+        if (report.cargo?.volume) return report.cargo.volume;
+        if (
+          report.dailyCargoDetails &&
+          Array.isArray(report.dailyCargoDetails)
+        ) {
+          return report.dailyCargoDetails.reduce((sum: number, daily: any) => {
+            const qty = parseFloat(daily.quantity) || 0;
+            return sum + qty;
+          }, 0);
+        }
+        return 0;
+      };
+
+      // Calculate total demurrages
+      const getTotalDemurrages = (report: any): number => {
+        if (report.demurragesCollected) return report.demurragesCollected;
+        if (report.totalRevenue) return report.totalRevenue;
+        if (
+          report.dailyCargoDetails &&
+          Array.isArray(report.dailyCargoDetails)
+        ) {
+          return report.dailyCargoDetails.reduce((sum: number, daily: any) => {
+            const dem = parseFloat(daily.demurrageCharges) || 0;
+            return sum + dem;
+          }, 0);
+        }
+        return 0;
+      };
+
       // Main report row
       const mainRow = [
         r.vesselName || "-",
-        r.port?.portName || "-",
-        r.agentName || "-",
-        r.ownerDetails || "-",
-        r.purposeOfArrival || "-",
-        r.status || "-",
-        formatNumber(r.totalQuantity) ?? "-",
+        r.portName || "-",
+        r.vesselAgent || r.agentName || "-",
+        r.vesselOwner || r.ownerDetails || "-",
+        r.operation || r.purposeOfArrival || "-",
+        r.vesselStatus || r.status || "-",
+        r.cargo?.type || r.cargo?.name || "-",
+        r.cargo?.name || "-",
+        formatNumber(getTotalQuantity(r)) || "-",
         r.dwt || "-",
         r.loa || "-",
-        formatDate(r.berthedDate) || "-",
-        formatDate(r.departureDate) || "-",
-        formatNumber(r.demurragesCollected) ?? "-",
-        formatDate(r.clearanceIssued) || "-",
+        formatFirebaseDate(r.berthingDateTime) ||
+          formatDate(r.berthedDate) ||
+          "-",
+        formatFirebaseDate(r.sailedOutDate) ||
+          formatDate(r.departureDate) ||
+          "-",
+        formatNumber(getTotalDemurrages(r)) || "-",
+        formatFirebaseDate(r.clearanceIssuedOn) ||
+          formatDate(r.clearanceIssued) ||
+          "-",
       ];
       rows.push(mainRow);
 
-      // Daily data rows with indent
-      if (r.dailyData && Array.isArray(r.dailyData) && r.dailyData.length > 0) {
-        // Add daily data header with proper indentation
-        const dailyHeaderRow = Array(
-          reportHeaders.length - dailyHeaders.length
-        ).fill("");
-        rows.push([...dailyHeaderRow, ...dailyHeaders.map(String)]);
-
-        // Add daily data rows
-        r.dailyData.forEach((daily: any) => {
-          if (
+      // Daily data rows with indent - handle both old and new data structures
+      const dailyDataArray = r.dailyCargoDetails || r.dailyData;
+      if (
+        dailyDataArray &&
+        Array.isArray(dailyDataArray) &&
+        dailyDataArray.length > 0
+      ) {
+        // Filter out empty daily data entries
+        const validDailyData = dailyDataArray.filter((daily: any) => {
+          return (
             daily &&
             (daily.date ||
               daily.cargoType ||
+              daily.cargoTypeInDetail ||
               daily.typeOfCargo ||
+              daily.quantity ||
               daily.totalQuantity ||
+              daily.demurrageCharges ||
               daily.demurrages ||
               daily.reason)
-          ) {
+          );
+        });
+
+        if (validDailyData.length > 0) {
+          // Add daily data header with proper indentation
+          const dailyHeaderRow = Array(
+            reportHeaders.length - dailyHeaders.length
+          ).fill("");
+          rows.push([...dailyHeaderRow, ...dailyHeaders.map(String)]);
+
+          // Add daily data rows
+          validDailyData.forEach((daily: any) => {
             const dailyDataRow = Array(
               reportHeaders.length - dailyHeaders.length
             ).fill("");
             rows.push([
               ...dailyDataRow,
-              String(formatDate(daily.date) || "-"),
+              String(formatFirebaseDate(daily.date) || "-"),
               String(daily.cargoType || "-"),
-              String(daily.typeOfCargo || "-"),
-              String(formatNumber(daily.totalQuantity) || "-"),
-              String(formatNumber(daily.demurrages) || "-"),
+              String(daily.cargoTypeInDetail || daily.typeOfCargo || "-"),
+              String(
+                formatNumber(daily.quantity || daily.totalQuantity) || "-"
+              ),
+              String(
+                formatNumber(daily.demurrageCharges || daily.demurrages) || "-"
+              ),
               String(daily.reason || "-"),
             ]);
-          }
-        });
+          });
 
-        // Add spacing row
-        rows.push(Array(reportHeaders.length).fill(""));
+          // Add spacing row
+          rows.push(Array(reportHeaders.length).fill(""));
+        }
       }
     });
     return rows;
@@ -276,9 +348,10 @@ export function exportWeeklySummaryAndReports(
       } else if (
         cellValue === "Date" ||
         cellValue === "Cargo Type" ||
-        cellValue === "Type of Cargo" ||
-        cellValue === "Total Quantity" ||
-        cellValue === "Demurrages"
+        cellValue === "Cargo Details" ||
+        cellValue === "Quantity" ||
+        cellValue === "Demurrage Charges" ||
+        cellValue === "Reason"
       ) {
         // Daily data headers - slightly different style
         ws[cellRef].s = {
@@ -291,13 +364,17 @@ export function exportWeeklySummaryAndReports(
           "Port",
           "Agent Name",
           "Owner Details",
-          "Purpose of Arrival",
+          "Operation/Purpose",
           "Status",
+          "Cargo Type",
+          "Cargo Name",
+          "Total Quantity",
           "DWT",
           "LOA",
           "Berthed Date",
           "Departure Date",
-          "Clearance Status",
+          "Total Revenue/Demurrages",
+          "Clearance Date",
         ].includes(cellValue)
       ) {
         // Main headers
