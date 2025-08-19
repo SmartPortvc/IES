@@ -630,7 +630,8 @@ export function exportPortWiseSummaryAndReports(
                   formatNumber(daily.quantity || daily.totalQuantity) || "-"
                 ),
                 String(
-                  formatNumber(daily.demurrageCharges || daily.demurrages) || "-"
+                  formatNumber(daily.demurrageCharges || daily.demurrages) ||
+                    "-"
                 ),
                 String(daily.reason || "-"),
               ]);
