@@ -6,6 +6,12 @@ export interface WeeklySummary {
   remarks?: string;
 }
 
+export interface PortSummaryData {
+  portName: string;
+  summary: WeeklySummary[];
+  vessels: Record<string, unknown>[];
+}
+
 // Helper function to create cell styles
 const createStyles = () => ({
   headerStyle: {
@@ -426,6 +432,344 @@ export function exportWeeklySummaryAndReports(
     });
 
   // Add some padding to the worksheet
+  ws["!margins"] = {
+    left: 0.5,
+    right: 0.5,
+    top: 0.5,
+    bottom: 0.5,
+  };
+
+  // Export
+  XLSX.writeFile(wb, fileName);
+}
+
+export function exportPortWiseSummaryAndReports(
+  portSummaries: PortSummaryData[],
+  fileName = "port_wise_weekly_report.xlsx"
+) {
+  const styles = createStyles();
+  let allSheetData: any[] = [];
+
+  // Process each port
+  portSummaries.forEach((portData, index) => {
+    // Port title
+    allSheetData.push([
+      `${portData.portName.toUpperCase()} - SUMMARY (ABSTRACT)`,
+    ]);
+    allSheetData.push([]); // Empty row
+
+    // Summary table
+    allSheetData.push(["S.no", "Description", "Total Number", "Remarks"]);
+    portData.summary.forEach((row, i) => {
+      allSheetData.push([
+        i + 1,
+        row.description,
+        formatNumber(row.total),
+        row.remarks || "",
+      ]);
+    });
+
+    allSheetData.push([]); // Empty row
+
+    // Only process cleared vessels
+    const clearedVessels = portData.vessels.filter(
+      (vessel) => vessel.clearanceIssuedOn || vessel.clearanceIssued
+    );
+
+    if (clearedVessels.length > 0) {
+      // Vessels section title
+      allSheetData.push([
+        `${portData.portName.toUpperCase()} - CLEARED VESSELS`,
+      ]);
+      allSheetData.push([]); // Empty row
+
+      // Vessel headers
+      const reportHeaders = [
+        "Vessel Name",
+        "Port",
+        "Agent Name",
+        "Owner Details",
+        "Operation/Purpose",
+        "Status",
+        "Cargo Type",
+        "Cargo Name",
+        "Total Quantity",
+        "DWT",
+        "LOA",
+        "Berthed Date",
+        "Departure Date",
+        "Total Revenue/Demurrages",
+        "Clearance Date",
+      ];
+      allSheetData.push(reportHeaders);
+
+      // Format vessel data
+      clearedVessels.forEach((vessel) => {
+        const formatFirebaseDate = (timestamp: any): string => {
+          if (!timestamp) return "-";
+          if (typeof timestamp === "string") return formatDate(timestamp);
+          if (timestamp.seconds) {
+            return formatDate(new Date(timestamp.seconds * 1000).toISOString());
+          }
+          return "-";
+        };
+
+        const getTotalQuantity = (vessel: any): number => {
+          if (vessel.totalQuantity) return vessel.totalQuantity;
+          if (vessel.cargo?.volume) return vessel.cargo.volume;
+          if (
+            vessel.dailyCargoDetails &&
+            Array.isArray(vessel.dailyCargoDetails)
+          ) {
+            return vessel.dailyCargoDetails.reduce(
+              (sum: number, daily: any) => {
+                const qty = parseFloat(daily.quantity) || 0;
+                return sum + qty;
+              },
+              0
+            );
+          }
+          return 0;
+        };
+
+        const getTotalDemurrages = (vessel: any): number => {
+          if (vessel.demurragesCollected) return vessel.demurragesCollected;
+          if (vessel.totalRevenue) return vessel.totalRevenue;
+          if (
+            vessel.dailyCargoDetails &&
+            Array.isArray(vessel.dailyCargoDetails)
+          ) {
+            return vessel.dailyCargoDetails.reduce(
+              (sum: number, daily: any) => {
+                const dem = parseFloat(daily.demurrageCharges) || 0;
+                return sum + dem;
+              },
+              0
+            );
+          }
+          return 0;
+        };
+
+        // Main vessel row
+        const vesselRow = [
+          vessel.vesselName || "-",
+          portData.portName || "-",
+          vessel.vesselAgent || vessel.agentName || "-",
+          vessel.vesselOwner || vessel.ownerDetails || "-",
+          vessel.operation || vessel.purposeOfArrival || "-",
+          vessel.vesselStatus || vessel.status || "-",
+          vessel.cargo?.type || vessel.cargo?.name || "-",
+          vessel.cargo?.name || "-",
+          formatNumber(getTotalQuantity(vessel)) || "-",
+          vessel.dwt || "-",
+          vessel.loa || "-",
+          formatFirebaseDate(vessel.berthingDateTime) ||
+            formatDate(vessel.berthedDate) ||
+            "-",
+          formatFirebaseDate(vessel.sailedOutDate) ||
+            formatDate(vessel.departureDate) ||
+            "-",
+          formatNumber(getTotalDemurrages(vessel)) || "-",
+          formatFirebaseDate(vessel.clearanceIssuedOn) ||
+            formatDate(vessel.clearanceIssued) ||
+            "-",
+        ];
+        allSheetData.push(vesselRow);
+
+        // Add daily cargo details if available
+        const dailyDataArray = vessel.dailyCargoDetails || vessel.dailyData;
+        if (
+          dailyDataArray &&
+          Array.isArray(dailyDataArray) &&
+          dailyDataArray.length > 0
+        ) {
+          // Filter out empty daily data entries
+          const validDailyData = dailyDataArray.filter((daily: any) => {
+            return (
+              daily &&
+              (daily.date ||
+                daily.cargoType ||
+                daily.cargoTypeInDetail ||
+                daily.typeOfCargo ||
+                daily.quantity ||
+                daily.totalQuantity ||
+                daily.demurrageCharges ||
+                daily.demurrages ||
+                daily.reason)
+            );
+          });
+
+          if (validDailyData.length > 0) {
+            // Daily data headers
+            const dailyHeaders = [
+              "Date",
+              "Cargo Type",
+              "Cargo Details",
+              "Quantity",
+              "Demurrage Charges",
+              "Reason",
+            ];
+
+            // Add daily data header with proper indentation
+            const dailyHeaderRow = Array(
+              reportHeaders.length - dailyHeaders.length
+            ).fill("");
+            allSheetData.push([...dailyHeaderRow, ...dailyHeaders.map(String)]);
+
+            // Add daily data rows
+            validDailyData.forEach((daily: any) => {
+              const dailyDataRow = Array(
+                reportHeaders.length - dailyHeaders.length
+              ).fill("");
+              allSheetData.push([
+                ...dailyDataRow,
+                String(formatFirebaseDate(daily.date) || "-"),
+                String(daily.cargoType || "-"),
+                String(daily.cargoTypeInDetail || daily.typeOfCargo || "-"),
+                String(
+                  formatNumber(daily.quantity || daily.totalQuantity) || "-"
+                ),
+                String(
+                  formatNumber(daily.demurrageCharges || daily.demurrages) || "-"
+                ),
+                String(daily.reason || "-"),
+              ]);
+            });
+
+            // Add spacing row after daily data
+            allSheetData.push(Array(reportHeaders.length).fill(""));
+          }
+        }
+      });
+    }
+
+    // Add space between ports (except for the last one)
+    if (index < portSummaries.length - 1) {
+      allSheetData.push([]); // Empty row
+      allSheetData.push([]); // Extra empty row
+    }
+  });
+
+  // Create worksheet
+  const combinedSheet = XLSX.utils.aoa_to_sheet(allSheetData);
+
+  // Set column widths
+  setColumnWidths(combinedSheet, [
+    6, // S.No
+    35, // Description/Vessel Name
+    20, // Total Number/Port
+    15, // Remarks/Agent Name
+    20, // Owner Details
+    15, // Purpose of Arrival
+    15, // Status
+    15, // Cargo Type
+    20, // Type of Cargo
+    12, // Total Quantity
+    12, // DWT
+    12, // LOA
+    15, // Berthed Date
+    15, // Departure Date
+    15, // Total Revenue
+    15, // Clearance Date
+  ]);
+
+  // Apply styles
+  const ws = combinedSheet;
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[cellRef]) continue;
+
+      const cellValue = ws[cellRef].v;
+      if (
+        typeof cellValue === "string" &&
+        cellValue.includes(" - SUMMARY (ABSTRACT)")
+      ) {
+        // Port summary titles
+        ws[cellRef].s = styles.titleStyle;
+      } else if (
+        typeof cellValue === "string" &&
+        cellValue.includes(" - CLEARED VESSELS")
+      ) {
+        // Vessel section titles
+        ws[cellRef].s = styles.titleStyle;
+      } else if (
+        [
+          "S.no",
+          "Description",
+          "Total Number",
+          "Remarks",
+          "Vessel Name",
+          "Port",
+          "Agent Name",
+          "Owner Details",
+          "Operation/Purpose",
+          "Status",
+          "Cargo Type",
+          "Cargo Name",
+          "Total Quantity",
+          "DWT",
+          "LOA",
+          "Berthed Date",
+          "Departure Date",
+          "Total Revenue/Demurrages",
+          "Clearance Date",
+        ].includes(cellValue)
+      ) {
+        // Headers
+        ws[cellRef].s = styles.headerStyle;
+      } else if (
+        [
+          "Date",
+          "Cargo Type",
+          "Cargo Details",
+          "Quantity",
+          "Demurrage Charges",
+          "Reason",
+        ].includes(cellValue)
+      ) {
+        // Daily data headers - slightly different style
+        ws[cellRef].s = {
+          ...styles.headerStyle,
+          fill: { fgColor: { rgb: "E2E8F0" } }, // Lighter background for sub-headers
+        };
+      } else {
+        // Regular cells
+        ws[cellRef].s = styles.cellStyle;
+      }
+    }
+  }
+
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, combinedSheet, "Port Wise Weekly Report");
+
+  // Set custom row heights
+  ws["!rows"] = Array(allSheetData.length)
+    .fill(null)
+    .map((_, i) => {
+      const rowData = allSheetData[i];
+      if (rowData && rowData[0] && typeof rowData[0] === "string") {
+        if (
+          rowData[0].includes("SUMMARY (ABSTRACT)") ||
+          rowData[0].includes("CLEARED VESSELS")
+        ) {
+          return { hpt: 35 }; // Title rows
+        }
+      }
+      // Headers get slightly more height
+      if (
+        rowData &&
+        (rowData.includes("S.no") || rowData.includes("Vessel Name"))
+      ) {
+        return { hpt: 30 }; // Header rows
+      }
+      // Regular rows
+      return { hpt: 25 };
+    });
+
+  // Add margins
   ws["!margins"] = {
     left: 0.5,
     right: 0.5,

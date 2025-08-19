@@ -16,10 +16,28 @@ import Button from "../ui/Button";
 import SearchFilter from "../ui/SearchFilter";
 import StatusBadge from "../ui/StatusBadge";
 import { formatDateTime, formatCurrency } from "../../utils/formatters";
-import { exportWeeklySummaryAndReports } from "../../utils/excelExport";
+import {
+  WeeklySummary,
+  exportPortWiseSummaryAndReports,
+  PortSummaryData,
+} from "../../utils/excelExport";
+
+interface DailyCargoDetail {
+  date?: Date | string;
+  cargoType?: string;
+  cargoTypeInDetail?: string;
+  quantity?: string;
+  demurrageCharges?: string;
+  reason?: string;
+}
+
+interface VesselWithPortName extends Vessel {
+  portName?: string;
+  dailyCargoDetails?: DailyCargoDetail[];
+}
 
 interface VesselListProps {
-  vessels: Vessel[];
+  vessels: VesselWithPortName[];
   loading: boolean;
   error: string | null;
   portName?: string;
@@ -68,7 +86,7 @@ const VesselList: React.FC<VesselListProps> = ({
     vessels: vessels.filter((vessel) => vessel.imo === "12341234"),
   });
 
-  function getCargoSumsByType(data) {
+  function getCargoSumsByType(data: VesselWithPortName[]) {
     const cargoSums = {
       Container: 0,
       "Break Bulk": 0,
@@ -80,12 +98,12 @@ const VesselList: React.FC<VesselListProps> = ({
     for (const vessel of data) {
       if (!vessel.clearanceIssuedOn) continue;
 
-      for (const entry of vessel.dailyCargoDetails) {
+      for (const entry of vessel.dailyCargoDetails || []) {
         const type = entry.cargoTypeInDetail;
-        const quantity = parseFloat(entry.quantity);
+        const quantity = parseFloat(entry.quantity || "0");
 
-        if (!isNaN(quantity) && cargoSums.hasOwnProperty(type)) {
-          cargoSums[type] += quantity;
+        if (!isNaN(quantity) && type && type in cargoSums) {
+          (cargoSums as Record<string, number>)[type] += quantity;
         }
       }
     }
@@ -95,11 +113,7 @@ const VesselList: React.FC<VesselListProps> = ({
 
   interface DailyCargoDetail {
     demurrageCharges?: string;
-  }
-
-  interface DemurrageVessel {
-    vesselName: string;
-    dailyCargoDetails?: DailyCargoDetail[];
+    quantity?: string;
   }
 
   interface VesselDemurrageSummary {
@@ -108,13 +122,13 @@ const VesselList: React.FC<VesselListProps> = ({
   }
 
   function calculateTotalDemurrage(
-    vessels: DemurrageVessel[]
+    vessels: VesselWithPortName[]
   ): VesselDemurrageSummary[] {
     return vessels.map((vessel) => {
       const totalDemurrage =
         vessel.dailyCargoDetails?.reduce(
           (sum: number, cargo: DailyCargoDetail) => {
-            const charge = parseFloat(cargo.demurrageCharges as string) || 0;
+            const charge = parseFloat(cargo.demurrageCharges || "0") || 0;
             return sum + charge;
           },
           0
@@ -127,24 +141,19 @@ const VesselList: React.FC<VesselListProps> = ({
     });
   }
 
-  interface QuantityVessel {
-    vesselName: string;
-    dailyCargoDetails?: DailyCargoDetail[];
-  }
-
   interface VesselTotalSummary {
     vesselName: string;
     totalQuantity: number;
   }
 
   function calculateTotalQuantity(
-    vessels: QuantityVessel[]
+    vessels: VesselWithPortName[]
   ): VesselTotalSummary[] {
     return vessels.map((vessel) => {
       const totalQuantity =
         vessel.dailyCargoDetails?.reduce(
           (sum: number, cargo: DailyCargoDetail) => {
-            const charge = parseFloat(cargo.quantity as string) || 0;
+            const charge = parseFloat(cargo.quantity || "0") || 0;
             return sum + charge;
           },
           0
@@ -157,47 +166,53 @@ const VesselList: React.FC<VesselListProps> = ({
     });
   }
 
-  const summary = useMemo(() => {
+  // Function to calculate summary for a specific port
+  const calculatePortSummary = (
+    vessels: VesselWithPortName[],
+    portName: string
+  ): WeeklySummary[] => {
     const now = new Date();
     const lastWeekStart = new Date(now);
     lastWeekStart.setDate(now.getDate() - 7);
     lastWeekStart.setHours(0, 0, 0, 0);
     const lastWeekEnd = new Date(now);
     lastWeekEnd.setHours(23, 59, 59, 999);
-    const isLastWeek = (report: any) => {
-      const createdAt = report.createdAt || report.created_at;
+
+    const isLastWeek = (report: VesselWithPortName) => {
+      const createdAt = report.createdAt || report.addedDate;
       if (!createdAt || !createdAt.seconds) return false;
       const d = new Date(createdAt.seconds * 1000);
       return d >= lastWeekStart && d <= lastWeekEnd;
     };
-    const totalVesselsLastWeek = filteredVessels.filter(isLastWeek).length;
-    // Calculate total vessels in port (berthed - departed)
-    const totalBerthedVessels = filteredVessels.filter(
+
+    const totalVesselsLastWeek = vessels.filter(isLastWeek).length;
+    const totalBerthedVessels = vessels.filter(
       (r) => r.berthingDateTime
     ).length;
-    const totalDepartedVessels = filteredVessels.filter(
+    const totalDepartedVessels = vessels.filter(
       (r) => r.pobDepartureDateTime
     ).length;
     const totalVesselsInPort = totalBerthedVessels - totalDepartedVessels;
 
-    const totalLoading = filteredVessels.filter(
+    const totalLoading = vessels.filter(
       (r) =>
         r.operationType.toLowerCase() === "loading" &&
         Boolean(r.clearanceIssuedOn)
     ).length;
-    const totalUnloading = filteredVessels.filter(
+    const totalUnloading = vessels.filter(
       (r) =>
         r.operationType.toLowerCase() === "unloading" &&
         Boolean(r.clearanceIssuedOn)
     ).length;
-    const totalDepartedLastWeek = filteredVessels.filter(
+    const totalDepartedLastWeek = vessels.filter(
       (r) => Boolean(r.pobDepartureDateTime) && isLastWeek(r)
     ).length;
-    const totalDemurrages = calculateTotalDemurrage(filteredVessels).reduce(
+
+    const totalDemurrages = calculateTotalDemurrage(vessels).reduce(
       (sum, { totalDemurrage }) => sum + totalDemurrage,
       0
     );
-    const totalCargoHandled = calculateTotalQuantity(filteredVessels).reduce(
+    const totalCargoHandled = calculateTotalQuantity(vessels).reduce(
       (sum, { totalQuantity }) => sum + totalQuantity,
       0
     );
@@ -208,64 +223,66 @@ const VesselList: React.FC<VesselListProps> = ({
       Project: projectCargo,
       "Liquid Bulk": liquidCargo,
       "Dry Bulk": bulkCargo,
-    } = getCargoSumsByType(filteredVessels);
+    } = getCargoSumsByType(vessels);
 
-    const totalAppliedClearance = filteredVessels.filter((r) =>
+    const totalAppliedClearance = vessels.filter((r) =>
       Boolean(r.clearanceIssuedOn)
     ).length;
-    const totalIssuedClearance = filteredVessels.filter((r) =>
+    const totalIssuedClearance = vessels.filter((r) =>
       Boolean(r.clearanceIssuedOn)
     ).length;
 
     return [
       {
-        description: "Total number of vessels called in the last week",
+        description: `Total number of vessels called in ${portName} in the last week`,
         total: totalVesselsLastWeek,
       },
       {
-        description: "Total number of vessels in the port as on date",
+        description: `Total number of vessels in ${portName} as on date`,
         total: totalVesselsInPort,
       },
       {
-        description: "Total number of vessels loading in the port as on date",
+        description: `Total number of vessels loading in ${portName} as on date`,
         total: totalLoading,
       },
       {
-        description: "Total number of vessels Unloading in the port as on date",
+        description: `Total number of vessels unloading in ${portName} as on date`,
         total: totalUnloading,
       },
       {
-        description: "Total vessels departed last week",
+        description: `Total vessels departed from ${portName} last week`,
         total: totalDepartedLastWeek,
       },
       {
-        description: "Demurrages collected (if any) from the ships by the port",
+        description: `Demurrages collected from ships by ${portName}`,
         total: totalDemurrages,
       },
       {
-        description:
-          "Total cargo handled since the start of the financial year",
+        description: `Total cargo handled by ${portName} since start of financial year`,
         total: totalCargoHandled,
       },
       {
-        description: "Cargo handled in the last week",
+        description: `Cargo handled by ${portName} in the last week`,
         total: breakBulk + bulkCargo + container + projectCargo + liquidCargo,
       },
-      { description: "Bulk cargo", total: bulkCargo },
-      { description: "Break Bulk", total: breakBulk },
-      { description: "Container (in TEU & MMT)", total: container },
-      { description: "Project cargo", total: projectCargo },
-      { description: "Liquid cargo", total: liquidCargo },
+      { description: `${portName} - Bulk cargo`, total: bulkCargo },
+      { description: `${portName} - Break Bulk`, total: breakBulk },
       {
-        description: "Total number of vessels applied for clearance",
+        description: `${portName} - Container (in TEU & MMT)`,
+        total: container,
+      },
+      { description: `${portName} - Project cargo`, total: projectCargo },
+      { description: `${portName} - Liquid cargo`, total: liquidCargo },
+      {
+        description: `Total number of vessels applied for clearance at ${portName}`,
         total: totalAppliedClearance,
       },
       {
-        description: "Total number of clearances issued",
+        description: `Total number of clearances issued by ${portName}`,
         total: totalIssuedClearance,
       },
     ];
-  }, [filteredVessels]);
+  };
 
   const handleExportAllWeekly = () => {
     const loadingUnloadingReports = filteredVessels.filter(
@@ -273,11 +290,55 @@ const VesselList: React.FC<VesselListProps> = ({
         report.operationType.toLowerCase() === "import" ||
         report.operationType.toLowerCase() === "export"
     );
-    console.log({
-      summary,
-      loadingUnloadingReports,
+
+    // Group vessels by port
+    const vesselsByPort = new Map<string, VesselWithPortName[]>();
+    loadingUnloadingReports.forEach((vessel) => {
+      const port = vessel.portName || "Unknown Port";
+      if (!vesselsByPort.has(port)) {
+        vesselsByPort.set(port, []);
+      }
+      vesselsByPort.get(port)!.push(vessel);
     });
-    exportWeeklySummaryAndReports(summary, loadingUnloadingReports);
+
+    // Calculate summary for all ports combined
+    const allPortsSummary = calculatePortSummary(
+      loadingUnloadingReports,
+      "All Ports"
+    );
+
+    // Calculate summary for each port and sort alphabetically
+    const portSummaries: PortSummaryData[] = [];
+
+    // First add the "All Ports" summary
+    portSummaries.push({
+      portName: "All Ports",
+      summary: allPortsSummary,
+      vessels: loadingUnloadingReports.filter(
+        (vessel) => vessel.clearanceIssuedOn
+      ) as unknown as Record<string, unknown>[], // Only cleared vessels
+    });
+
+    // Then add individual port summaries sorted alphabetically
+    const sortedPortEntries = Array.from(vesselsByPort.entries()).sort(
+      ([a], [b]) => a.localeCompare(b)
+    );
+
+    sortedPortEntries.forEach(([portName, portVessels]) => {
+      const portSummary = calculatePortSummary(portVessels, portName);
+      portSummaries.push({
+        portName,
+        summary: portSummary,
+        vessels: portVessels.filter(
+          (vessel) => vessel.clearanceIssuedOn
+        ) as unknown as Record<string, unknown>[], // Only cleared vessels
+      });
+    });
+
+    console.log({
+      portSummaries,
+    });
+    exportPortWiseSummaryAndReports(portSummaries);
   };
 
   const exportToCSV = useCallback(() => {
@@ -332,13 +393,13 @@ const VesselList: React.FC<VesselListProps> = ({
 
     // Generate data rows
     const rows = vessels.map((vessel) => {
-      const formatValue = (value: any) => {
+      const formatValue = (value: string | number | null | undefined) => {
         if (value === null || value === undefined) return "";
         if (typeof value === "string") return `"${value.replace(/"/g, '""')}"`;
         return value;
       };
 
-      const formatDateValue = (date: any) => {
+      const formatDateValue = (date: Date | string | null | undefined) => {
         return date ? formatDateTime(date) : "";
       };
 
