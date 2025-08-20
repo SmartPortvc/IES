@@ -85,21 +85,21 @@ const PortSidebar: React.FC = () => {
           collapsed={collapsed}
         />
 
-        <SidebarItem
+        {/* <SidebarItem
           icon={<PlusCircle className="h-5 w-5" />}
           label="ADD WEEKLY REPORT"
           onClick={() => navigate("/add-weekly-performance")}
           isActive={isActive("/add-weekly-performance")}
           collapsed={collapsed}
-        />
+        /> */}
 
-        <SidebarItem
+        {/* <SidebarItem
           icon={<CalendarDays className="h-5 w-5" />}
           label="WEEKLY REPORT"
           onClick={() => navigate("/weekly-performance")}
           isActive={isActive("/weekly-performance")}
           collapsed={collapsed}
-        />
+        /> */}
       </div>
 
       <div className="p-4 border-t border-seagreen-700">

@@ -345,7 +345,7 @@ const VesselsPage: React.FC = () => {
           >
             Vessel Info
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab("weekly")}
             className={`
               py-4 px-1 border-b-2 font-medium text-sm
@@ -357,7 +357,7 @@ const VesselsPage: React.FC = () => {
             `}
           >
             Weekly Reports
-          </button>
+          </button> */}
         </nav>
       </div>
     </div>
@@ -454,214 +454,214 @@ const VesselsPage: React.FC = () => {
     );
   };
 
-  const renderWeeklyTab = () => {
-    if (weeklyLoading) {
-      return <LoadingSpinner message="Loading weekly reports..." />;
-    }
+  // const renderWeeklyTab = () => {
+  //   if (weeklyLoading) {
+  //     return <LoadingSpinner message="Loading weekly reports..." />;
+  //   }
 
-    if (weeklyError) {
-      return <ErrorDisplay message={weeklyError} />;
-    }
+  //   if (weeklyError) {
+  //     return <ErrorDisplay message={weeklyError} />;
+  //   }
 
-    return (
-      <>
-        <Card
-          title="Filters"
-          icon={<Calendar className="h-6 w-6 text-seagreen-600" />}
-          className="mb-6"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Port
-              </label>
-              <select
-                value={weeklySelectedPortId}
-                onChange={(e) => setWeeklySelectedPortId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
-              >
-                <option value="all">All Ports</option>
-                {ports.map((port) => (
-                  <option key={port.id} value={port.id}>
-                    {port.portName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <DateRangePicker
-                fromDate={weeklyFromDate}
-                toDate={weeklyToDate}
-                onFromDateChange={setWeeklyFromDate}
-                onToDateChange={setWeeklyToDate}
-                fromLabel="From Report Date"
-                toLabel="To Report Date"
-              />
-            </div>
-          </div>
+  //   return (
+  //     <>
+  //       <Card
+  //         title="Filters"
+  //         icon={<Calendar className="h-6 w-6 text-seagreen-600" />}
+  //         className="mb-6"
+  //       >
+  //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //           <div>
+  //             <label className="block text-sm font-medium text-gray-700 mb-1">
+  //               Select Port
+  //             </label>
+  //             <select
+  //               value={weeklySelectedPortId}
+  //               onChange={(e) => setWeeklySelectedPortId(e.target.value)}
+  //               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+  //             >
+  //               <option value="all">All Ports</option>
+  //               {ports.map((port) => (
+  //                 <option key={port.id} value={port.id}>
+  //                   {port.portName}
+  //                 </option>
+  //               ))}
+  //             </select>
+  //           </div>
+  //           <div className="md:col-span-2">
+  //             <DateRangePicker
+  //               fromDate={weeklyFromDate}
+  //               toDate={weeklyToDate}
+  //               onFromDateChange={setWeeklyFromDate}
+  //               onToDateChange={setWeeklyToDate}
+  //               fromLabel="From Report Date"
+  //               toLabel="To Report Date"
+  //             />
+  //           </div>
+  //         </div>
 
-          {(weeklyFromDate ||
-            weeklyToDate ||
-            weeklySelectedPortId !== "all") && (
-            <div className="mt-4 flex items-center justify-between bg-seagreen-50 p-3 rounded-lg">
-              <p className="text-sm text-seagreen-700">
-                Showing {filteredReports.length} reports
-                {weeklySelectedPortId !== "all" &&
-                  ` from ${
-                    ports.find((p) => p.id === weeklySelectedPortId)?.portName
-                  }`}
-                {weeklyFromDate && weeklyToDate
-                  ? ` between ${new Date(
-                      weeklyFromDate
-                    ).toLocaleDateString()} and ${new Date(
-                      weeklyToDate
-                    ).toLocaleDateString()}`
-                  : weeklyFromDate
-                  ? ` from ${new Date(weeklyFromDate).toLocaleDateString()}`
-                  : weeklyToDate
-                  ? ` until ${new Date(weeklyToDate).toLocaleDateString()}`
-                  : ""}
-              </p>
-              <button
-                onClick={() => {
-                  setWeeklyFromDate("");
-                  setWeeklyToDate("");
-                  setWeeklySelectedPortId("all");
-                }}
-                className="text-sm text-seagreen-600 hover:text-seagreen-800 font-medium"
-              >
-                Clear Filters
-              </button>
-            </div>
-          )}
-        </Card>
+  //         {(weeklyFromDate ||
+  //           weeklyToDate ||
+  //           weeklySelectedPortId !== "all") && (
+  //           <div className="mt-4 flex items-center justify-between bg-seagreen-50 p-3 rounded-lg">
+  //             <p className="text-sm text-seagreen-700">
+  //               Showing {filteredReports.length} reports
+  //               {weeklySelectedPortId !== "all" &&
+  //                 ` from ${
+  //                   ports.find((p) => p.id === weeklySelectedPortId)?.portName
+  //                 }`}
+  //               {weeklyFromDate && weeklyToDate
+  //                 ? ` between ${new Date(
+  //                     weeklyFromDate
+  //                   ).toLocaleDateString()} and ${new Date(
+  //                     weeklyToDate
+  //                   ).toLocaleDateString()}`
+  //                 : weeklyFromDate
+  //                 ? ` from ${new Date(weeklyFromDate).toLocaleDateString()}`
+  //                 : weeklyToDate
+  //                 ? ` until ${new Date(weeklyToDate).toLocaleDateString()}`
+  //                 : ""}
+  //             </p>
+  //             <button
+  //               onClick={() => {
+  //                 setWeeklyFromDate("");
+  //                 setWeeklyToDate("");
+  //                 setWeeklySelectedPortId("all");
+  //               }}
+  //               className="text-sm text-seagreen-600 hover:text-seagreen-800 font-medium"
+  //             >
+  //               Clear Filters
+  //             </button>
+  //           </div>
+  //         )}
+  //       </Card>
 
-        <Card
-          title="Weekly Performance Reports"
-          icon={<Ship className="h-6 w-6 text-seagreen-600" />}
-        >
-          <div className="w-full flex items-center mb-4">
-            <Button
-              variant="outline"
-              onClick={handleExportAll}
-              className="ml-auto"
-              icon={
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              }
-            >
-              Export All
-            </Button>
-          </div>
-          {filteredReports.length === 0 ? (
-            <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-8 rounded text-center">
-              <Ship className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-              <h3 className="text-lg font-medium">No weekly reports found</h3>
-              <p className="mt-2 text-gray-500">
-                No weekly performance reports have been added yet
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 w-full">
-                  <tr>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Vessel Name
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Port
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Agent Name
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Owner Details
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Purpose
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cargo Type
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type of Cargo
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Quantity
-                    </th>
-                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredReports.map((report) => (
-                    <tr key={report.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.vesselName || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.port?.portName || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.agentName || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.ownerDetails || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.purposeOfArrival || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.status || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.cargoType || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.typeOfCargo || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {report.totalQuantity ?? "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedReport(report);
-                            setIsViewModalOpen(true);
-                          }}
-                        >
-                          View Details
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-      </>
-    );
-  };
+  //       <Card
+  //         title="Weekly Performance Reports"
+  //         icon={<Ship className="h-6 w-6 text-seagreen-600" />}
+  //       >
+  //         <div className="w-full flex items-center mb-4">
+  //           <Button
+  //             variant="outline"
+  //             onClick={handleExportAll}
+  //             className="ml-auto"
+  //             icon={
+  //               <svg
+  //                 xmlns="http://www.w3.org/2000/svg"
+  //                 width="16"
+  //                 height="16"
+  //                 viewBox="0 0 24 24"
+  //                 fill="none"
+  //                 stroke="currentColor"
+  //                 strokeWidth="2"
+  //                 strokeLinecap="round"
+  //                 strokeLinejoin="round"
+  //               >
+  //                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+  //                 <polyline points="7 10 12 15 17 10"></polyline>
+  //                 <line x1="12" y1="15" x2="12" y2="3"></line>
+  //               </svg>
+  //             }
+  //           >
+  //             Export All
+  //           </Button>
+  //         </div>
+  //         {filteredReports.length === 0 ? (
+  //           <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-8 rounded text-center">
+  //             <Ship className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+  //             <h3 className="text-lg font-medium">No weekly reports found</h3>
+  //             <p className="mt-2 text-gray-500">
+  //               No weekly performance reports have been added yet
+  //             </p>
+  //           </div>
+  //         ) : (
+  //           <div className="overflow-x-auto">
+  //             <table className="min-w-full divide-y divide-gray-200">
+  //               <thead className="bg-gray-50 w-full">
+  //                 <tr>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Vessel Name
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Port
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Agent Name
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Owner Details
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Purpose
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Status
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Cargo Type
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Type of Cargo
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Total Quantity
+  //                   </th>
+  //                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+  //                     Actions
+  //                   </th>
+  //                 </tr>
+  //               </thead>
+  //               <tbody className="bg-white divide-y divide-gray-200">
+  //                 {filteredReports.map((report) => (
+  //                   <tr key={report.id} className="hover:bg-gray-50">
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.vesselName || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.port?.portName || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.agentName || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.ownerDetails || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.purposeOfArrival || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.status || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.cargoType || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.typeOfCargo || "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       {report.totalQuantity ?? "N/A"}
+  //                     </td>
+  //                     <td className="px-6 py-4 whitespace-nowrap">
+  //                       <Button
+  //                         variant="outline"
+  //                         onClick={() => {
+  //                           setSelectedReport(report);
+  //                           setIsViewModalOpen(true);
+  //                         }}
+  //                       >
+  //                         View Details
+  //                       </Button>
+  //                     </td>
+  //                   </tr>
+  //                 ))}
+  //               </tbody>
+  //             </table>
+  //           </div>
+  //         )}
+  //       </Card>
+  //     </>
+  //   );
+  // };
 
   return (
     <DashboardLayout
@@ -673,8 +673,7 @@ const VesselsPage: React.FC = () => {
       }
       icon={<Ship className="h-6 w-6 text-seagreen-600" />}
     >
-      {renderTabs()}
-      {activeTab === "vessels" ? renderVesselsTab() : renderWeeklyTab()}
+      {renderVesselsTab()}
 
       {/* View Modal for Weekly Reports */}
       <ViewReportModal

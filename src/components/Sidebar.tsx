@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem }) => {
           <Ship className="h-5 w-5" />
           {!collapsed && <span>Vessels</span>}
         </button>
-        <button
+        {/* <button
           onClick={() =>
             handleNavigation(isFullAdmin ? "/admin/weekly" : "/hod/weekly")
           }
@@ -138,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem }) => {
         >
           <Ship className="h-5 w-5" />
           {!collapsed && <span>Weekly Performance</span>}
-        </button>
+        </button> */}
 
         {isFullAdmin && (
           <button
