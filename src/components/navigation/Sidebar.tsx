@@ -112,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem }) => {
           collapsed={collapsed}
         />
 
-        <SidebarItem
+        {/* <SidebarItem
           icon={<Ship className="h-5 w-5" />}
           label="Weekly Performance"
           onClick={() =>
@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem, setActiveItem }) => {
           }
           isActive={location.pathname.includes("/weekly")}
           collapsed={collapsed}
-        />
+        /> */}
 
         {isFullAdmin && (
           <SidebarItem

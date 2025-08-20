@@ -78,6 +78,24 @@ const VesselForm: React.FC = () => {
     "Coastal"
   );
 
+  // Daily Cargo Details
+  const [dailyCargoRows, setDailyCargoRows] = useState([
+    {
+      date: "",
+      cargoTypeInDetail: "",
+      cargoType: "",
+      quantity: "",
+      demurrageCharges: "",
+      reason: "",
+    },
+  ]);
+
+  // Vessel Status and Clearance
+  const [vesselStatus, setVesselStatus] = useState<
+    "Loading" | "Discharging" | "Completed"
+  >("Loading");
+  const [clearanceIssuedOn, setClearanceIssuedOn] = useState("");
+
   // Form state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +170,30 @@ const VesselForm: React.FC = () => {
     return true;
   };
 
+  const handleAddDailyCargoRow = () => {
+    setDailyCargoRows([
+      ...dailyCargoRows,
+      {
+        date: "",
+        cargoTypeInDetail: "",
+        cargoType: "",
+        quantity: "",
+        demurrageCharges: "",
+        reason: "",
+      },
+    ]);
+  };
+
+  const handleDailyCargoChange = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
+    const updatedRows = [...dailyCargoRows];
+    updatedRows[index] = { ...updatedRows[index], [field]: value };
+    setDailyCargoRows(updatedRows);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -216,6 +258,22 @@ const VesselForm: React.FC = () => {
         },
         totalRevenue: Number(totalRevenue),
         voyageType,
+
+        // Daily Cargo Details
+        dailyCargoDetails: dailyCargoRows.map((row) => ({
+          date: row.date ? new Date(row.date) : null,
+          cargoTypeInDetail: row.cargoTypeInDetail,
+          cargoType: row.cargoType,
+          quantity: row.quantity,
+          demurrageCharges: row.demurrageCharges,
+          reason: row.reason,
+        })),
+
+        // Vessel Status and Clearance
+        vesselStatus,
+        clearanceIssuedOn: clearanceIssuedOn
+          ? new Date(clearanceIssuedOn)
+          : null,
 
         // Metadata
         addedDate: new Date(),
@@ -300,6 +358,55 @@ const VesselForm: React.FC = () => {
       </Card>
 
       <Card
+        title="Vessel Status & Clearance"
+        icon={<Ship className="h-6 w-6 text-seagreen-600" />}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block font-medium mb-1">
+              Vessel Status <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                value={vesselStatus}
+                onChange={(e) =>
+                  setVesselStatus(
+                    e.target.value as "Loading" | "Discharging" | "Completed"
+                  )
+                }
+                required
+              >
+                <option value="Loading">Loading</option>
+                <option value="Discharging">Discharging</option>
+                <option value="Completed">Completed</option>
+              </select>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Ship className="h-5 w-5 text-seagreen-500" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">
+              Clearance Issued On
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                value={clearanceIssuedOn}
+                onChange={(e) => setClearanceIssuedOn(e.target.value)}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Ship className="h-5 w-5 text-seagreen-500" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card
         title="Draft Information"
         icon={<Ship className="h-6 w-6 text-seagreen-600" />}
       >
@@ -344,6 +451,129 @@ const VesselForm: React.FC = () => {
           voyageType={voyageType}
           setVoyageType={setVoyageType}
         />
+      </Card>
+
+      <Card
+        title="Daily Cargo Details"
+        icon={<Ship className="h-6 w-6 text-seagreen-600" />}
+      >
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border px-4 py-2">DATE</th>
+                <th className="border px-4 py-2">TYPE OF CARGO IN DETAIL</th>
+                <th className="border px-4 py-2">TYPE OF CARGO</th>
+                <th className="border px-4 py-2">QUANTITY</th>
+                <th className="border px-4 py-2">
+                  DEMARAGE CHARGES COLLECTED FROM THE SHIP IN RS.
+                </th>
+                <th className="border px-4 py-2">REASON</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dailyCargoRows.map((row, index) => (
+                <tr key={index}>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="date"
+                      className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                      value={row.date}
+                      onChange={(e) =>
+                        handleDailyCargoChange(index, "date", e.target.value)
+                      }
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <select
+                      className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                      value={row.cargoTypeInDetail}
+                      onChange={(e) =>
+                        handleDailyCargoChange(
+                          index,
+                          "cargoTypeInDetail",
+                          e.target.value
+                        )
+                      }
+                    >
+                      <option value="">Select cargo type</option>
+                      {cargoTypes.map((type) => (
+                        <option key={type.id} value={type.name}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="text"
+                      className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                      value={row.cargoType}
+                      onChange={(e) =>
+                        handleDailyCargoChange(
+                          index,
+                          "cargoType",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Enter type"
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="text"
+                      className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                      value={row.quantity}
+                      onChange={(e) =>
+                        handleDailyCargoChange(
+                          index,
+                          "quantity",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Enter quantity"
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="text"
+                      className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                      value={row.demurrageCharges}
+                      onChange={(e) =>
+                        handleDailyCargoChange(
+                          index,
+                          "demurrageCharges",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Enter demurrages"
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="text"
+                      className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+                      value={row.reason}
+                      onChange={(e) =>
+                        handleDailyCargoChange(index, "reason", e.target.value)
+                      }
+                      placeholder="Enter Reason"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button
+            type="button"
+            onClick={handleAddDailyCargoRow}
+            icon={<span className="mr-2">+</span>}
+          >
+            Add Row
+          </Button>
+        </div>
       </Card>
 
       {/* Form Actions */}
