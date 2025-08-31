@@ -66,10 +66,10 @@ export interface Vessel {
   // Additional Fields
   imo: string;
   grt: string;
-  arrivalDateTime: Date;
-  pobDateTime: Date;
-  berthingDateTime: Date;
-  pobDepartureDateTime?: Date;
+  arrivalDateTime?: Date | null;
+  pobDateTime?: Date | null;
+  berthingDateTime?: Date | null;
+  pobDepartureDateTime?: Date | null;
   nextPortOfCall?: string;
   cargoQuantity: string;
   totalRevenue?: string;
@@ -80,7 +80,7 @@ export interface Vessel {
   loa: number;
   beam?: number;
   dwt: number;
-  clearanceIssuedOn: Date;
+  clearanceIssuedOn?: Date | null;
 
   // Draft Information
   arrivalDraft?: {
@@ -93,7 +93,8 @@ export interface Vessel {
   };
 
   // Operation Details
-  operationType: "Import" | "Export" | "Coastal";
+  operationType: "Import" | "Export" | "Coastal" | "Other";
+  purposeOfArrivalOther?: string;
   fromTo: string;
   location: string;
   operation: "Loading" | "Unloading" | "Transhipment" | "Lighterage";

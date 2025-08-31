@@ -285,15 +285,12 @@ const VesselList: React.FC<VesselListProps> = ({
   };
 
   const handleExportAllWeekly = () => {
-    const loadingUnloadingReports = filteredVessels.filter(
-      (report) =>
-        report.operationType.toLowerCase() === "import" ||
-        report.operationType.toLowerCase() === "export"
-    );
+    // Use all filtered vessels without filtering by operation type
+    const allReports = filteredVessels;
 
     // Group vessels by port
     const vesselsByPort = new Map<string, VesselWithPortName[]>();
-    loadingUnloadingReports.forEach((vessel) => {
+    allReports.forEach((vessel) => {
       const port = vessel.portName || "Unknown Port";
       if (!vesselsByPort.has(port)) {
         vesselsByPort.set(port, []);
@@ -302,10 +299,7 @@ const VesselList: React.FC<VesselListProps> = ({
     });
 
     // Calculate summary for all ports combined
-    const allPortsSummary = calculatePortSummary(
-      loadingUnloadingReports,
-      "All Ports"
-    );
+    const allPortsSummary = calculatePortSummary(allReports, "All Ports");
 
     // Calculate summary for each port and sort alphabetically
     const portSummaries: PortSummaryData[] = [];
@@ -314,7 +308,7 @@ const VesselList: React.FC<VesselListProps> = ({
     portSummaries.push({
       portName: "All Ports",
       summary: allPortsSummary,
-      vessels: loadingUnloadingReports.filter(
+      vessels: allReports.filter(
         (vessel) => vessel.clearanceIssuedOn
       ) as unknown as Record<string, unknown>[], // Only cleared vessels
     });

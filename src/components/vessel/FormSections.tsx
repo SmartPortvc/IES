@@ -563,8 +563,10 @@ export const VesselDraftInfo: React.FC<VesselDraftInfoProps> = ({
 );
 
 interface VesselOperationInfoProps {
-  operationType: "Import" | "Export" | "Coastal";
-  setOperationType: (value: "Import" | "Export" | "Coastal") => void;
+  operationType: "Import" | "Export" | "Coastal" | "Other";
+  setOperationType: (value: "Import" | "Export" | "Coastal" | "Other") => void;
+  purposeOfArrivalOther: string;
+  setPurposeOfArrivalOther: (value: string) => void;
   arrivalFrom: string;
   setArrivalFrom: (value: string) => void;
   location: string;
@@ -593,6 +595,8 @@ interface VesselOperationInfoProps {
 export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
   operationType,
   setOperationType,
+  purposeOfArrivalOther,
+  setPurposeOfArrivalOther,
   arrivalFrom,
   setArrivalFrom,
   location,
@@ -627,7 +631,9 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
           id="operationType"
           value={operationType}
           onChange={(e) =>
-            setOperationType(e.target.value as "Import" | "Export" | "Coastal")
+            setOperationType(
+              e.target.value as "Import" | "Export" | "Coastal" | "Other"
+            )
           }
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
           required
@@ -635,6 +641,7 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
           <option value="Import">Import</option>
           <option value="Export">Export</option>
           <option value="Coastal">Coastal</option>
+          <option value="Other">Other</option>
         </select>
       </FormField>
 
@@ -658,6 +665,27 @@ export const VesselOperationInfo: React.FC<VesselOperationInfoProps> = ({
         </select>
       </FormField>
     </div>
+
+    {operationType === "Other" && (
+      <div className="grid grid-cols-1 gap-6">
+        <FormField
+          id="purposeOfArrivalOther"
+          label="Specify Purpose of Arrival"
+          required
+          icon={<Ship className="h-5 w-5 text-seagreen-500" />}
+        >
+          <input
+            type="text"
+            id="purposeOfArrivalOther"
+            value={purposeOfArrivalOther}
+            onChange={(e) => setPurposeOfArrivalOther(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+            required
+            placeholder="Enter purpose of arrival"
+          />
+        </FormField>
+      </div>
+    )}
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField

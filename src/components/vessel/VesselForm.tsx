@@ -61,8 +61,9 @@ const VesselForm: React.FC = () => {
 
   // Operation Details
   const [operationType, setOperationType] = useState<
-    "Import" | "Export" | "Coastal"
+    "Import" | "Export" | "Coastal" | "Other"
   >("Import");
+  const [purposeOfArrivalOther, setPurposeOfArrivalOther] = useState("");
   const [arrivalFrom, setArrivalFrom] = useState("");
   const [location, setLocation] = useState("");
   const [operation, setOperation] = useState<
@@ -136,6 +137,14 @@ const VesselForm: React.FC = () => {
       { value: cargoName, name: "Cargo Name" },
       { value: volume, name: "Volume" },
     ];
+
+    // Add purposeOfArrivalOther to required fields if operationType is "Other"
+    if (operationType === "Other") {
+      requiredFields.push({
+        value: purposeOfArrivalOther,
+        name: "Purpose of Arrival (Other)",
+      });
+    }
 
     for (const field of requiredFields) {
       if (!field.value.trim()) {
@@ -212,6 +221,7 @@ const VesselForm: React.FC = () => {
       const vesselData = {
         portId,
         // General Information
+        berthDetails: "", // Add missing field - you might want to add a state for this
         length: Number(length),
         draftAvailable: Number(draftAvailable),
         vesselName,
@@ -228,6 +238,13 @@ const VesselForm: React.FC = () => {
           ? new Date(pobDepartureDateTime)
           : null,
         nextPortOfCall,
+        cargoQuantity,
+        totalRevenue: totalRevenue,
+        voyageType,
+        arrivalFrom,
+        clearanceIssuedOn: clearanceIssuedOn
+          ? new Date(clearanceIssuedOn)
+          : null,
 
         // Static Data
         loa: Number(loa),
@@ -246,7 +263,8 @@ const VesselForm: React.FC = () => {
 
         // Operation Details
         operationType,
-        arrivalFrom,
+        purposeOfArrivalOther,
+        fromTo: arrivalFrom, // Map arrivalFrom to fromTo for now
         location,
         operation,
         cargo: {
@@ -254,10 +272,7 @@ const VesselForm: React.FC = () => {
           name: cargoName,
           volume: Number(volume),
           units,
-          quantity: cargoQuantity,
         },
-        totalRevenue: Number(totalRevenue),
-        voyageType,
 
         // Daily Cargo Details
         dailyCargoDetails: dailyCargoRows.map((row) => ({
@@ -271,11 +286,9 @@ const VesselForm: React.FC = () => {
 
         // Vessel Status and Clearance
         vesselStatus,
-        clearanceIssuedOn: clearanceIssuedOn
-          ? new Date(clearanceIssuedOn)
-          : null,
 
         // Metadata
+        createdAt: new Date(),
         addedDate: new Date(),
       };
 
@@ -429,6 +442,8 @@ const VesselForm: React.FC = () => {
         <VesselOperationInfo
           operationType={operationType}
           setOperationType={setOperationType}
+          purposeOfArrivalOther={purposeOfArrivalOther}
+          setPurposeOfArrivalOther={setPurposeOfArrivalOther}
           arrivalFrom={arrivalFrom}
           setArrivalFrom={setArrivalFrom}
           location={location}
