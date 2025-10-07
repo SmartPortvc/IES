@@ -399,7 +399,6 @@ const VesselsPage: React.FC = () => {
             </div>
 
 
-            </div>
           </div>
 
           {(fromDate || toDate || selectedPortId !== "all") && (
