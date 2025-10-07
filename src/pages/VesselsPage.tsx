@@ -398,13 +398,22 @@ const VesselsPage: React.FC = () => {
               </select>
             </div>
 
-
+            <div className="md:col-span-2">
+              <DateRangePicker
+                fromDate={fromDate}
+                toDate={toDate}
+                onFromDateChange={setFromDate}
+                onToDateChange={setToDate}
+                fromLabel="From Arrival Date"
+                toLabel="To Arrival Date"
+              />
+            </div>
           </div>
 
           {(fromDate || toDate || selectedPortId !== "all") && (
             <div className="mt-4 flex items-center justify-between bg-seagreen-50 p-3 rounded-lg">
               <p className="text-sm text-seagreen-700">
-               
+                Showing {filteredVessels.length} vessel{filteredVessels.length !== 1 ? 's' : ''}
                 {selectedPortId !== "all" &&
                   ` from ${
                     ports.find((p) => p.id === selectedPortId)?.portName
