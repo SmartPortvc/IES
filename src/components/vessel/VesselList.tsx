@@ -14,6 +14,7 @@ import LoadingSpinner from "../ui/LoadingSpinner";
 import ErrorDisplay from "../ui/ErrorDisplay";
 import Button from "../ui/Button";
 import SearchFilter from "../ui/SearchFilter";
+import DateRangePicker from "../ui/DateRangePicker";
 import StatusBadge from "../ui/StatusBadge";
 import { formatDateTime, formatCurrency } from "../../utils/formatters";
 import {
@@ -57,6 +58,8 @@ const VesselList: React.FC<VesselListProps> = ({
   const [filterType, setFilterType] = useState<
     "all" | "Import" | "Export" | "Coastal"
   >("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const handleViewDetails = useCallback(
     (vesselId: string) => {
@@ -78,9 +81,46 @@ const VesselList: React.FC<VesselListProps> = ({
       const matchesType =
         filterType === "all" || vessel.operationType === filterType;
 
-      return matchesSearch && matchesType;
+      let matchesDateRange = true;
+      if (fromDate || toDate) {
+        const arrivalDate = vessel.arrivalDateTime;
+        if (arrivalDate) {
+          let vesselDate: Date;
+
+          if (typeof arrivalDate === 'string') {
+            vesselDate = new Date(arrivalDate);
+          } else if (arrivalDate instanceof Date) {
+            vesselDate = arrivalDate;
+          } else if (arrivalDate && typeof arrivalDate === 'object' && 'seconds' in arrivalDate) {
+            vesselDate = new Date((arrivalDate as any).seconds * 1000);
+          } else {
+            matchesDateRange = false;
+            return false;
+          }
+
+          if (fromDate) {
+            const from = new Date(fromDate);
+            from.setHours(0, 0, 0, 0);
+            if (vesselDate < from) {
+              matchesDateRange = false;
+            }
+          }
+
+          if (toDate && matchesDateRange) {
+            const to = new Date(toDate);
+            to.setHours(23, 59, 59, 999);
+            if (vesselDate > to) {
+              matchesDateRange = false;
+            }
+          }
+        } else {
+          matchesDateRange = false;
+        }
+      }
+
+      return matchesSearch && matchesType && matchesDateRange;
     });
-  }, [vessels, searchTerm, filterType]);
+  }, [vessels, searchTerm, filterType, fromDate, toDate]);
 
   console.log({
     vessels: vessels.filter((vessel) => vessel.imo === "12341234"),
@@ -496,6 +536,17 @@ const VesselList: React.FC<VesselListProps> = ({
         showExport={showExport}
         handleExportAllWeekly={handleExportAllWeekly}
       />
+
+      <div className="mb-6">
+        <DateRangePicker
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
+          fromLabel="From Arrival Date"
+          toLabel="To Arrival Date"
+        />
+      </div>
 
       {filteredVessels.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-8 rounded text-center">
