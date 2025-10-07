@@ -144,7 +144,7 @@ const PortRegistration: React.FC = () => {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <img 
-            src="https://apmaritime.in/images/13_apmb_logo.png"
+            src="https://apmaritime.in/assets/apmb-B0Lm-J0A.png"
             alt="APMB Logo"
             className="h-32 w-32 mx-auto mb-6 object-contain rounded-2xl shadow-lg"
           />
