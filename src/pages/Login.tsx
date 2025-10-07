@@ -89,7 +89,7 @@ const Login: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 space-y-8">
         <div className="flex flex-col items-center space-y-4">
           <img 
-            src="https://apmaritime.in/images/13_apmb_logo.png"
+            src="https://apmaritime.in/assets/apmb-B0Lm-J0A.png"
             alt="APMB Logo"
             className="h-20 w-20 object-contain"
           />
