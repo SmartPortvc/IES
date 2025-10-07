@@ -121,24 +121,38 @@ const VesselsPage: React.FC = () => {
     return vessels.filter((vessel) => {
       if (!fromDate && !toDate) return true;
 
-      const vesselDate = vessel.arrivalDateTime
-        ? new Date(vessel.arrivalDateTime)
-        : null;
+      const arrivalDate = vessel.arrivalDateTime;
+      if (!arrivalDate) return false;
 
-      if (!vesselDate) return true;
+      let vesselDate: Date;
+
+      if (typeof arrivalDate === 'string') {
+        vesselDate = new Date(arrivalDate);
+      } else if (arrivalDate instanceof Date) {
+        vesselDate = arrivalDate;
+      } else if (arrivalDate && typeof arrivalDate === 'object' && 'seconds' in arrivalDate) {
+        vesselDate = new Date((arrivalDate as any).seconds * 1000);
+      } else {
+        return false;
+      }
+
+      if (isNaN(vesselDate.getTime())) return false;
 
       const fromDateObj = fromDate ? new Date(fromDate) : null;
       const toDateObj = toDate ? new Date(toDate) : null;
 
-      if (fromDateObj && toDateObj) {
-        // Set end of day for toDate
+      if (fromDateObj) {
+        fromDateObj.setHours(0, 0, 0, 0);
+        if (vesselDate < fromDateObj) {
+          return false;
+        }
+      }
+
+      if (toDateObj) {
         toDateObj.setHours(23, 59, 59, 999);
-        return vesselDate >= fromDateObj && vesselDate <= toDateObj;
-      } else if (fromDateObj) {
-        return vesselDate >= fromDateObj;
-      } else if (toDateObj) {
-        toDateObj.setHours(23, 59, 59, 999);
-        return vesselDate <= toDateObj;
+        if (vesselDate > toDateObj) {
+          return false;
+        }
       }
 
       return true;
