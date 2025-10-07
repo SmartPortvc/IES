@@ -537,16 +537,7 @@ const VesselList: React.FC<VesselListProps> = ({
         handleExportAllWeekly={handleExportAllWeekly}
       />
 
-      <div className="mb-6">
-        <DateRangePicker
-          fromDate={fromDate}
-          toDate={toDate}
-          onFromDateChange={setFromDate}
-          onToDateChange={setToDate}
-          fromLabel="From Arrival Date"
-          toLabel="To Arrival Date"
-        />
-      </div>
+
 
       {filteredVessels.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-8 rounded text-center">
