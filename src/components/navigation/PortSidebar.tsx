@@ -53,7 +53,7 @@ const PortSidebar: React.FC = () => {
         }`}
       >
         <img
-          src="https://apmaritime.in/images/13_apmb_logo.png"
+          src="https://apmaritime.in/assets/apmb-B0Lm-J0A.png"
           alt="APMB Logo"
           className={`${
             collapsed ? "h-10 w-10" : "h-12 w-12"
