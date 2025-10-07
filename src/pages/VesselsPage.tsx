@@ -404,7 +404,7 @@ const VesselsPage: React.FC = () => {
           {(fromDate || toDate || selectedPortId !== "all") && (
             <div className="mt-4 flex items-center justify-between bg-seagreen-50 p-3 rounded-lg">
               <p className="text-sm text-seagreen-700">
-                Showing {filteredVessels.length} vessels
+               
                 {selectedPortId !== "all" &&
                   ` from ${
                     ports.find((p) => p.id === selectedPortId)?.portName
