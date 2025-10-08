@@ -11,6 +11,8 @@ import Button from '../components/ui/Button';
 import DateRangePicker from '../components/ui/DateRangePicker';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorDisplay from '../components/ui/ErrorDisplay';
+import ExcelReportGenerator from '../components/reports/ExcelReportGenerator';
+import { generateExcelReport } from '../utils/excelReportGenerator';
 
 const PortDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -63,6 +65,58 @@ const PortDashboard: React.FC = () => {
     navigate('/add-vessel');
   };
 
+  const handleGenerateWeeklyReport = () => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const weeklyVessels = vessels.filter(vessel => {
+      const arrivalDate = vessel.arrivalDateTime;
+      if (!arrivalDate) return false;
+
+      let vesselDate: Date;
+      if (typeof arrivalDate === 'string') {
+        vesselDate = new Date(arrivalDate);
+      } else if (arrivalDate instanceof Date) {
+        vesselDate = arrivalDate;
+      } else if (arrivalDate.seconds) {
+        vesselDate = new Date(arrivalDate.seconds * 1000);
+      } else {
+        return false;
+      }
+
+      return vesselDate >= weekAgo && vesselDate <= now;
+    });
+
+    generateExcelReport(weeklyVessels, portData?.portName || 'Port', 'weekly');
+  };
+
+  const handleGenerateCustomReport = (fromDate: string, toDate: string) => {
+    const from = new Date(fromDate);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(toDate);
+    to.setHours(23, 59, 59, 999);
+
+    const customVessels = vessels.filter(vessel => {
+      const arrivalDate = vessel.arrivalDateTime;
+      if (!arrivalDate) return false;
+
+      let vesselDate: Date;
+      if (typeof arrivalDate === 'string') {
+        vesselDate = new Date(arrivalDate);
+      } else if (arrivalDate instanceof Date) {
+        vesselDate = arrivalDate;
+      } else if (arrivalDate.seconds) {
+        vesselDate = new Date(arrivalDate.seconds * 1000);
+      } else {
+        return false;
+      }
+
+      return vesselDate >= from && vesselDate <= to;
+    });
+
+    generateExcelReport(customVessels, portData?.portName || 'Port', 'custom', fromDate, toDate);
+  };
+
   if (loadingPort) {
     return (
       <DashboardLayout title="Port Dashboard">
@@ -82,8 +136,8 @@ const PortDashboard: React.FC = () => {
   return (
     <DashboardLayout title="Port Dashboard">
       <div className="mb-6">
-        <Card 
-          title={`Welcome, ${portData?.portName}`} 
+        <Card
+          title={`Welcome, ${portData?.portName}`}
           icon={<Ship className="h-6 w-6 text-seagreen-600" />}
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -92,14 +146,14 @@ const PortDashboard: React.FC = () => {
                 Welcome to your port management dashboard. Here you can manage your vessels and view port information.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button 
+                <Button
                   onClick={handleAddVessel}
                   icon={<PlusCircle className="h-4 w-4" />}
                 >
                   Add New Vessel
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => navigate('/port-profile')}
                   icon={<FileText className="h-4 w-4" />}
                 >
@@ -125,6 +179,12 @@ const PortDashboard: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      <ExcelReportGenerator
+        onGenerateWeekly={handleGenerateWeeklyReport}
+        onGenerateCustom={handleGenerateCustomReport}
+        portName={portData?.portName}
+      />
 
       {/* Date Range Filter */}
       <Card 
