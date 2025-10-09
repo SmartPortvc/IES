@@ -198,6 +198,25 @@ const calculateWeeklySummary = (vessels: ReportVessel[], portName: string): Week
   ];
 };
 
+const applyCellStyle = (
+  ws: XLSX.WorkSheet,
+  cellRef: string,
+  style: {
+    font?: { name?: string; sz?: number; bold?: boolean; color?: { rgb: string } };
+    alignment?: { horizontal?: string; vertical?: string; wrapText?: boolean };
+    fill?: { fgColor: { rgb: string } };
+    border?: {
+      top?: { style: string; color: { rgb: string } };
+      bottom?: { style: string; color: { rgb: string } };
+      left?: { style: string; color: { rgb: string } };
+      right?: { style: string; color: { rgb: string } };
+    };
+  }
+) => {
+  if (!ws[cellRef]) return;
+  ws[cellRef].s = style;
+};
+
 export const generateExcelReport = (
   vessels: ReportVessel[],
   portName: string,
@@ -218,6 +237,7 @@ export const generateExcelReport = (
   const sheetData: any[][] = [
     [`${portName.toUpperCase()} - VESSEL MOVEMENT REPORT`],
     [`Report Period: ${dateRangeText}`],
+    [`Generated on: ${new Date().toLocaleString()}`],
     [],
     ['SUMMARY (ABSTRACT)'],
     [],
@@ -226,6 +246,8 @@ export const generateExcelReport = (
     [],
     [],
   ];
+
+  let currentRow = sheetData.length;
 
   if (clearedVessels.length > 0) {
     sheetData.push(
@@ -317,72 +339,137 @@ export const generateExcelReport = (
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
   ws['!cols'] = [
-    { wch: 6 },
+    { wch: 8 },
+    { wch: 30 },
     { wch: 25 },
-    { wch: 20 },
     { wch: 12 },
-    { wch: 20 },
-    { wch: 20 },
-    { wch: 15 },
-    { wch: 12 },
-    { wch: 20 },
-    { wch: 15 },
+    { wch: 25 },
+    { wch: 22 },
     { wch: 18 },
+    { wch: 14 },
+    { wch: 22 },
     { wch: 18 },
-    { wch: 15 },
+    { wch: 22 },
+    { wch: 22 },
     { wch: 18 },
+    { wch: 20 },
   ];
 
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+  const baseBorder = {
+    top: { style: 'thin', color: { rgb: '000000' } },
+    bottom: { style: 'thin', color: { rgb: '000000' } },
+    left: { style: 'thin', color: { rgb: '000000' } },
+    right: { style: 'thin', color: { rgb: '000000' } },
+  };
+
+  const baseFont = {
+    name: 'Calibri',
+    sz: 11,
+  };
+
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
       if (!ws[cellRef]) continue;
 
       const cellValue = ws[cellRef].v;
+      const cellString = String(cellValue);
 
-      if (R === 0 || R === 3 || String(cellValue).includes('ANNEXURE') || String(cellValue).includes('DEPARTURE DATE')) {
-        ws[cellRef].s = {
-          font: { bold: true, sz: 14, color: { rgb: '047857' } },
-          alignment: { horizontal: 'left', vertical: 'center' },
-          border: {
-            bottom: { style: 'medium', color: { rgb: '14B8A6' } },
-          },
-        };
-      } else if (R === 5 || String(cellValue) === 'S.No' || String(cellValue) === 'Description') {
-        ws[cellRef].s = {
-          fill: { fgColor: { rgb: '14B8A6' } },
-          font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+      if (R === 0) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 16, bold: true, color: { rgb: '1F2937' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          fill: { fgColor: { rgb: 'E0F2FE' } },
+          border: baseBorder,
+        });
+      } else if (R === 1 || R === 2) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 10, bold: false, color: { rgb: '4B5563' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          border: baseBorder,
+        });
+      } else if (R === 4 || cellString.includes('ANNEXURE') || cellString.includes('DEPARTURE DATE SECTION')) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: '047857' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          fill: { fgColor: { rgb: 'D1FAE5' } },
+          border: baseBorder,
+        });
+      } else if (
+        cellString === 'S.No' ||
+        cellString === 'Description' ||
+        cellString === 'Total Number' ||
+        cellString === 'Remarks' ||
+        cellString === 'Vessel Name' ||
+        cellString === 'Owner/Proprietor' ||
+        cellString === 'LOA (m)' ||
+        cellString === 'Agent Name' ||
+        cellString === 'Purpose of Arrival' ||
+        cellString === 'Berthed Date' ||
+        cellString === 'Vessel DWT' ||
+        cellString === 'Type of Cargo' ||
+        cellString === 'Quantity (MT/TEU)' ||
+        cellString === 'Loading/Discharging Commenced' ||
+        cellString === 'Loading/Discharging Completed' ||
+        cellString === 'Demurrage (₹)' ||
+        cellString === 'Clearance Issued On' ||
+        cellString === 'Status'
+      ) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
           alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-          border: {
-            top: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            bottom: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            left: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            right: { style: 'thin', color: { rgb: 'E5E7EB' } },
-          },
-        };
-      } else if (R > 5 && cellValue !== '') {
-        ws[cellRef].s = {
-          alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
-          font: { sz: 10 },
-          border: {
-            top: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            bottom: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            left: { style: 'thin', color: { rgb: 'E5E7EB' } },
-            right: { style: 'thin', color: { rgb: 'E5E7EB' } },
-          },
-        };
+          fill: { fgColor: { rgb: '14B8A6' } },
+          border: baseBorder,
+        });
+      } else if (cellValue !== '' && cellValue !== null && cellValue !== undefined) {
+        const isNumeric = typeof cellValue === 'number' ||
+                         (typeof cellValue === 'string' && !isNaN(parseFloat(cellValue.replace(/,/g, ''))));
+
+        const isSerialNumber = C === 0 && typeof cellValue === 'number' && cellValue < 1000;
+
+        let alignment: any = { vertical: 'center', wrapText: true };
+
+        if (isSerialNumber) {
+          alignment.horizontal = 'center';
+        } else if (isNumeric && !cellString.includes('-') && cellString !== '-') {
+          alignment.horizontal = 'right';
+        } else {
+          alignment.horizontal = 'left';
+        }
+
+        applyCellStyle(ws, cellRef, {
+          font: isSerialNumber ? { ...baseFont, bold: true } : baseFont,
+          alignment,
+          border: baseBorder,
+        });
+      } else {
+        applyCellStyle(ws, cellRef, {
+          font: baseFont,
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border: baseBorder,
+        });
       }
     }
   }
 
   ws['!rows'] = Array(sheetData.length).fill(null).map((_, i) => {
-    if (i === 0 || i === 3) return { hpt: 30 };
-    if (i === 5) return { hpt: 35 };
-    return { hpt: 25 };
+    if (i === 0) return { hpt: 35 };
+    if (i === 4 || sheetData[i]?.[0]?.includes?.('ANNEXURE') || sheetData[i]?.[0]?.includes?.('DEPARTURE')) {
+      return { hpt: 30 };
+    }
+    if (
+      sheetData[i]?.includes('S.No') ||
+      sheetData[i]?.includes('Description') ||
+      sheetData[i]?.includes('Vessel Name')
+    ) {
+      return { hpt: 28 };
+    }
+    return { hpt: 22 };
   });
 
-  ws['!margins'] = { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5 };
+  ws['!margins'] = { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 };
 
   XLSX.utils.book_append_sheet(wb, ws, 'Vessel Report');
 
