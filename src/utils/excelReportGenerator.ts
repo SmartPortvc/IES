@@ -170,23 +170,20 @@ const calculateWeeklySummary = (vessels: ReportVessel[], portName: string): Week
     {
       description: `Demurrages collected from ships by ${portName}`,
       total: formatNumber(totalDemurrages),
-      remarks: 'In local currency',
     },
     {
       description: `Total cargo handled by ${portName} since start of financial year`,
       total: formatNumber(totalCargoHandled),
-      remarks: 'In MT',
     },
     {
       description: `Cargo handled by ${portName} in the last week`,
       total: formatNumber(cargoByType.container + cargoByType.breakBulk + cargoByType.project + cargoByType.liquid + cargoByType.bulk),
-      remarks: 'In MT',
     },
-    { description: `${portName} - Dry Bulk cargo`, total: formatNumber(cargoByType.bulk), remarks: 'In MT' },
-    { description: `${portName} - Break Bulk`, total: formatNumber(cargoByType.breakBulk), remarks: 'In MT' },
-    { description: `${portName} - Container (in TEU & MMT)`, total: formatNumber(cargoByType.container), remarks: 'In TEU' },
-    { description: `${portName} - Project cargo`, total: formatNumber(cargoByType.project), remarks: 'In MT' },
-    { description: `${portName} - Liquid cargo`, total: formatNumber(cargoByType.liquid), remarks: 'In KL' },
+    { description: `${portName} - Dry Bulk cargo`, total: formatNumber(cargoByType.bulk) },
+    { description: `${portName} - Break Bulk`, total: formatNumber(cargoByType.breakBulk) },
+    { description: `${portName} - Container (in TEU & MMT)`, total: formatNumber(cargoByType.container) },
+    { description: `${portName} - Project cargo`, total: formatNumber(cargoByType.project) },
+    { description: `${portName} - Liquid cargo`, total: formatNumber(cargoByType.liquid) },
     {
       description: `Total number of vessels applied for clearance at ${portName}`,
       total: totalAppliedClearance,
@@ -242,7 +239,7 @@ export const generateExcelReport = (
     ['SUMMARY (ABSTRACT)'],
     [],
     ['S.No', 'Description', 'Total Number', 'Remarks'],
-    ...summary.map((row, i) => [i + 1, row.description, row.total, row.remarks || '']),
+    ...summary.map((row, i) => [i + 1, row.description, row.total, '']),
     [],
     [],
   ];
