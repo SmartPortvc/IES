@@ -214,14 +214,296 @@ const applyCellStyle = (
   ws[cellRef].s = style;
 };
 
+const generateAllPortsReport = (
+  wb: XLSX.WorkBook,
+  vessels: ReportVessel[],
+  reportType: 'weekly' | 'custom',
+  fromDate?: string,
+  toDate?: string
+) => {
+  const dateRangeText = reportType === 'weekly'
+    ? `${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString()} - ${new Date().toLocaleDateString()}`
+    : `${new Date(fromDate!).toLocaleDateString()} - ${new Date(toDate!).toLocaleDateString()}`;
+
+  // Group vessels by port
+  const vesselsByPort = vessels.reduce((acc, vessel) => {
+    const port = vessel.portName || 'Unknown Port';
+    if (!acc[port]) {
+      acc[port] = [];
+    }
+    acc[port].push(vessel);
+    return acc;
+  }, {} as Record<string, ReportVessel[]>);
+
+  const sheetData: any[][] = [
+    ['ALL PORTS - VESSEL MOVEMENT REPORT'],
+    [`Report Period: ${dateRangeText}`],
+    [`Generated on: ${new Date().toLocaleString()}`],
+    [],
+  ];
+
+  const baseBorder = {
+    top: { style: 'thin', color: { rgb: '000000' } },
+    bottom: { style: 'thin', color: { rgb: '000000' } },
+    left: { style: 'thin', color: { rgb: '000000' } },
+    right: { style: 'thin', color: { rgb: '000000' } },
+  };
+
+  const baseFont = {
+    name: 'Calibri',
+    sz: 11,
+  };
+
+  // Generate section for each port
+  Object.entries(vesselsByPort).forEach(([portName, portVessels]) => {
+    const clearedVessels = portVessels.filter(v => v.clearanceIssuedOn);
+    const pendingVessels = portVessels.filter(v => !v.clearanceIssuedOn);
+
+    sheetData.push(
+      [`${portName.toUpperCase()}`],
+      [],
+    );
+
+    if (clearedVessels.length > 0) {
+      sheetData.push(
+        ['CLEARED VESSELS'],
+        [
+          'S.No',
+          'Vessel Name',
+          'Owner/Proprietor',
+          'LOA (m)',
+          'Agent Name',
+          'Purpose of Arrival',
+          'Berthed Date',
+          'Vessel DWT',
+          'Type of Cargo',
+          'Quantity (MT/TEU)',
+          'Loading/Discharging Commenced',
+          'Loading/Discharging Completed',
+          'Demurrage (₹)',
+          'Clearance Issued On',
+        ]
+      );
+
+      clearedVessels.forEach((vessel, i) => {
+        const totalQty = vessel.dailyCargoDetails?.reduce((sum, d) =>
+          sum + (parseFloat(d.quantity || '0') || 0), 0
+        ) || vessel.cargo?.volume || 0;
+
+        const totalDem = vessel.dailyCargoDetails?.reduce((sum, d) =>
+          sum + (parseFloat(d.demurrageCharges || '0') || 0), 0
+        ) || vessel.totalRevenue || 0;
+
+        const firstCargoDate = vessel.dailyCargoDetails?.[0]?.date;
+        const lastCargoDate = vessel.dailyCargoDetails?.[vessel.dailyCargoDetails.length - 1]?.date;
+
+        sheetData.push([
+          i + 1,
+          vessel.vesselName || '-',
+          vessel.vesselOwner || '-',
+          vessel.loa || '-',
+          vessel.vesselAgent || '-',
+          vessel.operation || vessel.operationType || '-',
+          formatFirebaseDate(vessel.berthingDateTime),
+          vessel.dwt || '-',
+          vessel.cargo?.type || vessel.dailyCargoDetails?.[0]?.cargoTypeInDetail || '-',
+          formatNumber(totalQty),
+          formatFirebaseDate(firstCargoDate),
+          formatFirebaseDate(lastCargoDate),
+          formatNumber(totalDem),
+          formatFirebaseDate(vessel.clearanceIssuedOn),
+        ]);
+      });
+
+      sheetData.push([]);
+    }
+
+    if (pendingVessels.length > 0) {
+      sheetData.push(
+        ['PENDING CLEARANCE'],
+        [
+          'S.No',
+          'Vessel Name',
+          'Agent Name',
+          'Berthed Date',
+          'Purpose of Arrival',
+          'Demurrage (₹)',
+          'Status',
+        ]
+      );
+
+      pendingVessels.forEach((vessel, i) => {
+        const totalDem = vessel.dailyCargoDetails?.reduce((sum, d) =>
+          sum + (parseFloat(d.demurrageCharges || '0') || 0), 0
+        ) || vessel.totalRevenue || 0;
+
+        sheetData.push([
+          i + 1,
+          vessel.vesselName || '-',
+          vessel.vesselAgent || '-',
+          formatFirebaseDate(vessel.berthingDateTime),
+          vessel.operation || vessel.operationType || '-',
+          formatNumber(totalDem),
+          'Pending Clearance',
+        ]);
+      });
+
+      sheetData.push([]);
+    }
+
+    sheetData.push([]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  ws['!cols'] = [
+    { wch: 8 },
+    { wch: 30 },
+    { wch: 25 },
+    { wch: 12 },
+    { wch: 25 },
+    { wch: 22 },
+    { wch: 18 },
+    { wch: 14 },
+    { wch: 22 },
+    { wch: 18 },
+    { wch: 22 },
+    { wch: 22 },
+    { wch: 18 },
+    { wch: 20 },
+  ];
+
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[cellRef]) continue;
+
+      const cellValue = ws[cellRef].v;
+      const cellString = String(cellValue);
+
+      if (R === 0) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 16, bold: true, color: { rgb: '1F2937' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          fill: { fgColor: { rgb: 'E0F2FE' } },
+          border: baseBorder,
+        });
+      } else if (R === 1 || R === 2) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 10, bold: false, color: { rgb: '4B5563' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          border: baseBorder,
+        });
+      } else if (cellString.includes('CLEARED VESSELS') || cellString.includes('PENDING CLEARANCE')) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 12, bold: true, color: { rgb: '047857' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          fill: { fgColor: { rgb: 'D1FAE5' } },
+          border: baseBorder,
+        });
+      } else if (cellValue && typeof cellValue === 'string' && cellValue.toUpperCase() === cellValue && cellValue.length > 10 && !cellString.includes('CLEARED') && !cellString.includes('PENDING')) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: '0F172A' } },
+          alignment: { horizontal: 'left', vertical: 'center', wrapText: false },
+          fill: { fgColor: { rgb: 'FEF3C7' } },
+          border: baseBorder,
+        });
+      } else if (
+        cellString === 'S.No' ||
+        cellString === 'Vessel Name' ||
+        cellString === 'Owner/Proprietor' ||
+        cellString === 'LOA (m)' ||
+        cellString === 'Agent Name' ||
+        cellString === 'Purpose of Arrival' ||
+        cellString === 'Berthed Date' ||
+        cellString === 'Vessel DWT' ||
+        cellString === 'Type of Cargo' ||
+        cellString === 'Quantity (MT/TEU)' ||
+        cellString === 'Loading/Discharging Commenced' ||
+        cellString === 'Loading/Discharging Completed' ||
+        cellString === 'Demurrage (₹)' ||
+        cellString === 'Clearance Issued On' ||
+        cellString === 'Status'
+      ) {
+        applyCellStyle(ws, cellRef, {
+          font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          fill: { fgColor: { rgb: '14B8A6' } },
+          border: baseBorder,
+        });
+      } else if (cellValue !== '' && cellValue !== null && cellValue !== undefined) {
+        const isNumeric = typeof cellValue === 'number' ||
+                         (typeof cellValue === 'string' && !isNaN(parseFloat(cellValue.replace(/,/g, ''))));
+
+        const isSerialNumber = C === 0 && typeof cellValue === 'number' && cellValue < 1000;
+
+        let alignment: any = { vertical: 'center', wrapText: true };
+
+        if (isSerialNumber) {
+          alignment.horizontal = 'center';
+        } else if (isNumeric && !cellString.includes('-') && cellString !== '-') {
+          alignment.horizontal = 'right';
+        } else {
+          alignment.horizontal = 'left';
+        }
+
+        applyCellStyle(ws, cellRef, {
+          font: isSerialNumber ? { ...baseFont, bold: true } : baseFont,
+          alignment,
+          border: baseBorder,
+        });
+      } else {
+        applyCellStyle(ws, cellRef, {
+          font: baseFont,
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border: baseBorder,
+        });
+      }
+    }
+  }
+
+  ws['!rows'] = Array(sheetData.length).fill(null).map((_, i) => {
+    if (i === 0) return { hpt: 35 };
+    const cellValue = sheetData[i]?.[0];
+    if (typeof cellValue === 'string' && cellValue.toUpperCase() === cellValue && cellValue.length > 10 && !cellValue.includes('CLEARED') && !cellValue.includes('PENDING')) {
+      return { hpt: 30 };
+    }
+    if (
+      sheetData[i]?.includes('CLEARED VESSELS') ||
+      sheetData[i]?.includes('PENDING CLEARANCE')
+    ) {
+      return { hpt: 28 };
+    }
+    if (sheetData[i]?.includes('S.No') || sheetData[i]?.includes('Vessel Name')) {
+      return { hpt: 28 };
+    }
+    return { hpt: 22 };
+  });
+
+  ws['!margins'] = { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 };
+
+  XLSX.utils.book_append_sheet(wb, ws, 'All Ports Report');
+};
+
 export const generateExcelReport = (
   vessels: ReportVessel[],
   portName: string,
   reportType: 'weekly' | 'custom',
   fromDate?: string,
-  toDate?: string
+  toDate?: string,
+  isAllPorts: boolean = false
 ) => {
   const wb = XLSX.utils.book_new();
+
+  // If All Ports is selected, generate grouped report
+  if (isAllPorts) {
+    generateAllPortsReport(wb, vessels, reportType, fromDate, toDate);
+    const fileName = `All_Ports_${reportType}_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    return;
+  }
 
   const summary = calculateWeeklySummary(vessels, portName);
   const clearedVessels = vessels.filter(v => v.clearanceIssuedOn);

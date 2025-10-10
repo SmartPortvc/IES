@@ -5,9 +5,11 @@ import Button from '../ui/Button';
 import DateRangePicker from '../ui/DateRangePicker';
 
 interface ExcelReportGeneratorProps {
-  onGenerateWeekly: () => void;
-  onGenerateCustom: (fromDate: string, toDate: string) => void;
-  portName?: string;
+  onGenerateWeekly: (portId: string) => void;
+  onGenerateCustom: (fromDate: string, toDate: string, portId: string) => void;
+  ports: Array<{ id?: string; portName: string }>;
+  selectedPortId?: string;
+  onPortChange?: (portId: string) => void;
   isAdmin?: boolean;
   loading?: boolean;
 }
@@ -15,20 +17,30 @@ interface ExcelReportGeneratorProps {
 const ExcelReportGenerator: React.FC<ExcelReportGeneratorProps> = ({
   onGenerateWeekly,
   onGenerateCustom,
-  portName,
+  ports,
+  selectedPortId = 'all',
+  onPortChange,
   isAdmin = false,
   loading = false,
 }) => {
   const [reportType, setReportType] = useState<'weekly' | 'custom'>('weekly');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [localPortId, setLocalPortId] = useState(selectedPortId);
+
+  const handlePortChange = (portId: string) => {
+    setLocalPortId(portId);
+    if (onPortChange) {
+      onPortChange(portId);
+    }
+  };
 
   const handleGenerateReport = () => {
     if (reportType === 'weekly') {
-      onGenerateWeekly();
+      onGenerateWeekly(localPortId);
     } else {
       if (fromDate && toDate) {
-        onGenerateCustom(fromDate, toDate);
+        onGenerateCustom(fromDate, toDate, localPortId);
       } else {
         alert('Please select both From Date and To Date for custom report');
       }
@@ -45,6 +57,26 @@ const ExcelReportGenerator: React.FC<ExcelReportGeneratorProps> = ({
     >
       <div className="space-y-6">
         <div className="flex flex-col space-y-4">
+          {isAdmin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Port
+              </label>
+              <select
+                value={localPortId}
+                onChange={(e) => handlePortChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-seagreen-500"
+              >
+                <option value="all">All Ports</option>
+                {ports.map((port) => (
+                  <option key={port.id} value={port.id}>
+                    {port.portName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Report Type
@@ -116,14 +148,13 @@ const ExcelReportGenerator: React.FC<ExcelReportGeneratorProps> = ({
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
           <div className="text-sm text-gray-600">
-            {portName && (
-              <p>
-                <span className="font-medium">Port:</span> {portName}
-              </p>
-            )}
-            {isAdmin && !portName && (
+            {localPortId === 'all' ? (
               <p className="text-seagreen-600 font-medium">
                 Report will include all ports
+              </p>
+            ) : (
+              <p>
+                <span className="font-medium">Port:</span> {ports.find(p => p.id === localPortId)?.portName || 'Selected Port'}
               </p>
             )}
           </div>
