@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Registration Invitation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 32px;
+            background: linear-gradient(to right, #20B2AA, #1d9e97);
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .subtitle {
+            color: #e0f2f1;
+            margin: 8px 0 0;
+            font-size: 18px;
+        }
+        .content {
+            padding: 32px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #20B2AA;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 24px 0;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #1d9e97;
+        }
+        .info-box {
+            background-color: #f1f5f9;
+            border-left: 4px solid #20B2AA;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 24px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .registration-link {
+            word-break: break-all;
+            color: #20B2AA;
+        }
+        .expiry-notice {
+            color: #dc2626;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img 
+                src="https://apmaritime.in/assets/apmb-B0Lm-J0A.png" 
+                alt="APMB Logo" 
+                class="logo"
+            >
+            <h1 class="title">Andhra Pradesh Maritime Board (APMB)</h1>
+            <p class="subtitle">Port Registration Invitation</p>
+        </div>
+
+        <div class="content">
+            <p>Dear Team {{port_name}},</p>
+            
+            <p>You're invited to register {{port_name}} Port in the IES Portal. Complete your registration by clicking the button below or using the provided link.</p>
+            
+            <div style="text-align: center;">
+                <a href="{{registration_link}}" class="button">Complete Registration</a>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>Registration Details:</strong></p>
+                <ul>
+                    <li>Port Name: {{port_name}}</li>
+                    <li>Email: {{to_email}}</li>
+                </ul>
+                <p>During registration, you will need to provide:</p>
+                <ul>
+                    <li>Registered Address</li>
+                    <li>GST Number</li>
+                    <li>PAN Number</li>
+                    <li>Land allocated (acres)</li>
+                    <li>No of berths</li>
+                </ul>
+                <p class="expiry-notice">This invitation will expire in {{expiry_days}} days.</p>
+            </div>
+            
+            <p>If the button above doesn't work, please copy and paste the following link into your browser:</p>
+            <p class="registration-link">{{registration_link}}</p>
+            
+            <p>After completing your registration, you will be able to access the IES Portal dashboard to manage your port information.</p>
+            
+            <p>Best regards,<br>APMB Team</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>&copy; 2025 Andhra Pradesh Maritime Board. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
